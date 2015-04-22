@@ -65,7 +65,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_client_OBJECTS = client.$(OBJEXT)
+am_client_OBJECTS = client.$(OBJEXT) container.$(OBJEXT) \
+	parent.$(OBJEXT) child.$(OBJEXT)
 client_OBJECTS = $(am_client_OBJECTS)
 client_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
@@ -76,7 +77,8 @@ client_DEPENDENCIES = ../src/.libs/liboi_communicator.a \
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
-am_server_OBJECTS = server.$(OBJEXT)
+am_server_OBJECTS = server.$(OBJEXT) container.$(OBJEXT) \
+	parent.$(OBJEXT) child.$(OBJEXT)
 server_OBJECTS = $(am_server_OBJECTS)
 server_LDADD = $(LDADD)
 server_DEPENDENCIES = ../src/.libs/liboi_communicator.a \
@@ -266,7 +268,13 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 AM_CFLAGS = --pedantic
 AM_CXXFLAGS = --pedantic
-AM_CPPFLAGS = -I../src/  -DDSO -DBOOST_ALL_DYN_LINK
+AM_CPPFLAGS = -I../src/ \
+    $(OI_EXCEPTION_CFLAGS) \
+    $(ZMQ_CFLAGS) \
+    $(BOOST_SERIALIZATION_CFLAGS) \
+    $(BOOST_THREAD_CFLAGS) \
+    $(BOOST_SYSTEM_CFLAGS)
+
 LDADD = ../src/.libs/liboi_communicator.a \
     -lmsgpack \
 	$(OI_EXCEPTION_LIBS) \
@@ -276,8 +284,8 @@ LDADD = ../src/.libs/liboi_communicator.a \
     $(BOOST_SYSTEM_LIBS) 
 
 check_SCRIPTS = run_client_server.sh
-server_SOURCES = server.cpp
-client_SOURCES = client.cpp
+server_SOURCES = server.cpp container.cpp parent.cpp child.cpp
+client_SOURCES = client.cpp container.cpp  parent.cpp child.cpp 
 TESTS = $(check_SCRIPTS)
 all: all-am
 
@@ -335,7 +343,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/child.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/container.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
 
 .cpp.o:

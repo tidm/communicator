@@ -174,6 +174,30 @@ namespace oi
 
         return *it;
     }
+    std::set<std::string> service_info::get_methods()throw()
+    {
+        std::vector<service_sign>::iterator it;
+        std::set<std::string> lst;
+        try
+        {
+            for(it = _service_list.begin(); it != _service_list.end(); it++)
+            {
+                lst.insert(it->method);
+            }
+        }
+        catch(std::exception& ex)
+        {
+            oi::exception ox("std", "exception", ex.what());
+            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
+            throw ox;
+        }
+        catch(...)
+        {
+            throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
+        }
+
+        return lst;
+    }
 
     void service_info::put( std::string module,
             std::string method,
@@ -256,4 +280,4 @@ namespace oi
 
     }
 
-} // EON
+}

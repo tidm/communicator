@@ -14,6 +14,8 @@
 namespace oi
 {
     const int SOCKET_TIMEOUT_VALUE = 200;
+    const int CHANNEL_SOCKET_RECV_TIMEOUT = 1000;
+    const int CHANNEL_SOCKET_SEND_TIMEOUT = 200;
     enum oi_err {OI_SUCCESS, OI_ERROR};
 
     class communicator;
@@ -30,10 +32,15 @@ namespace oi
             bool _is_init;
 
             protected:
+            int _rcv_timeout;
+            int _snd_timeout;
             virtual void call(T t, R& r)throw (oi::exception);
             void initialize(const std::string &modulename,
                     const std::string &methodname,
-                    communicator * comm
+                    communicator * comm, 
+                    int snd_timeout, 
+                    int rcv_timeout
+
                     )throw(oi::exception)
             {
                 if(modulename.empty())
@@ -48,8 +55,10 @@ namespace oi
                 {
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid communicator reference! NULL pointer exception! ");
                 }
-                _method_name= methodname;
-                _module_name= modulename;
+                _method_name = methodname;
+                _module_name = modulename;
+                _snd_timeout = snd_timeout;
+                _rcv_timeout = rcv_timeout;
                 _comm       = comm;
                 _is_init = true;
             }
@@ -57,6 +66,8 @@ namespace oi
             {
                 _comm = NULL;
                 _is_init = false;
+                _rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT;
+                _snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT;
             }
             public:
             std::string to_string()throw(oi::exception)
@@ -88,9 +99,11 @@ namespace oi
         private:
             void initialize(const std::string &modulename,
                     const std::string &methodname,
-                    communicator * comm) throw(oi::exception)
+                    communicator * comm,
+                    int snd_timeout,
+                    int rcv_timeout) throw(oi::exception)
             {
-                method_interface<T,R>::initialize(modulename, methodname, comm);
+                method_interface<T,R>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
             }
         public:
             req_interface():method_interface<T,R>(){}
@@ -103,9 +116,11 @@ namespace oi
         private:
             void initialize(const std::string &modulename,
                     const std::string &methodname,
-                    communicator * comm) throw (oi::exception)
+                    communicator * comm,
+                    int snd_timeout,
+                    int rcv_timeout) throw (oi::exception)
             {
-                    method_interface<T,dummy_msg>::initialize(modulename, methodname, comm);
+                    method_interface<T,dummy_msg>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
             }
         public:
             put_interface():method_interface<T, dummy_msg>(){}
@@ -119,9 +134,11 @@ namespace oi
         private:
             void initialize(const std::string &modulename,
                     const std::string &methodname,
-                    communicator * comm)throw(oi::exception)
+                    communicator * comm,
+                    int snd_timeout,
+                    int rcv_timeout)throw(oi::exception)
             {
-                    method_interface<dummy_msg, T>::initialize(modulename, methodname, comm);
+                    method_interface<dummy_msg, T>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
             }
         public:
             get_interface():method_interface<dummy_msg, T>(){}
@@ -133,9 +150,11 @@ namespace oi
         private:
             void initialize(const std::string &modulename,
                     const std::string &methodname,
-                    communicator * comm)throw(std::exception)
+                    communicator * comm,
+                    int snd_timeout,
+                    int rcv_timeout)throw(std::exception)
             {
-                 method_interface<dummy_msg, dummy_msg>::initialize(modulename, methodname, comm);
+                 method_interface<dummy_msg, dummy_msg>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
             }
         public:
             sig_interface():method_interface<dummy_msg, dummy_msg>(){}
@@ -143,6 +162,7 @@ namespace oi
     };
 
 #define SERVICE_INFO_METHOD_NAME  "__GET_SERVICE_INFO"
+#define GET_STATE_METHOD_NAME  "__GET_STATE"
     class communicator
     {
         public:
@@ -375,7 +395,7 @@ namespace oi
 
                         try
                         {
-                            while(_state == READY)
+                            while(_state == READY )
                             {
                                 zmq::message_t req;
                                 T t;
@@ -419,7 +439,7 @@ namespace oi
                     }
                     catch(oi::exception& ex)
                     {
-                        if(_state == READY)
+                        if(_state == READY )
                         {
                             ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception");
                             throw ex;
@@ -591,7 +611,7 @@ namespace oi
                     }
                     catch(oi::exception& ex)
                     {
-                        if(_state == READY)
+                        if(_state == READY )
                         {
                             ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception");
                             throw ex;
@@ -616,10 +636,10 @@ namespace oi
                 }
             void lock();
             void unlock();
-            service_info get_service_list(const std::string& module);
+            service_info get_service_list(const std::string& module, bool use_cache = true);
 
             template<typename T, typename R>
-                double request(const std::string &module, const std::string& method, T& t, R& r )throw(oi::exception)
+                double request(const std::string &module, const std::string& method, T& t, R& r, int snd_timeout, int rcv_timeout )throw(oi::exception)
                 {
                     timespec t_s, t_e;
                     std::string ipc_str;
@@ -684,7 +704,7 @@ namespace oi
                         if(_channel_map.find(ipc_str) == _channel_map.end())
                         {
 
-                            chnl = new channel<T,R>(ipc_str, &_context, srz);
+                            chnl = new channel<T,R>(ipc_str, &_context, srz, snd_timeout, rcv_timeout);
                             chnl->init();
                             _channel_map[ipc_str] = chnl;
                         }
@@ -736,7 +756,7 @@ namespace oi
                         method_type mth_type
                         )throw(oi::exception)
                 {
-                    if(_state != READY)
+                    if(_state != READY )
                     {
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid use of not initilized communicator! call 'initialize()' before any callback registration");
                     }
@@ -809,18 +829,19 @@ namespace oi
                     _service_info_gaurd.unlock_shared();
                     return srv_info;
                 }
-
         public:
-
             communicator()throw();
             std::map<std::string, cm_stat> get_channel_stat()throw(oi::exception);
             void initialize(const std::string &me)throw(oi::exception);
             void wait()throw(oi::exception);
+            bool is_remote_ready(const std::string& module, const std::string& method)throw();
             void finalize()throw();
             void shutdown()throw();
             ~communicator()throw();
             sig_interface create_sig_interface(const std::string &module,
-                    const std::string &method
+                    const std::string &method, 
+                    int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
+                    int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
                     )throw (oi::exception);
 
             void register_callback(boost::function<void(void)> f,
@@ -831,13 +852,15 @@ namespace oi
 
             template<typename T, typename R>
                 req_interface<T,R> create_req_interface(const std::string &module, 
-                        const std::string &method 
+                        const std::string &method , 
+                        int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
+                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
                         )throw(oi::exception)
                 {
                     req_interface<T,R> f;
                     try
                     {
-                        f.initialize(module, method, this);
+                        f.initialize(module, method, this, snd_timeout, rcv_timeout);
                     }
                     catch(oi::exception& ex)
                     {
@@ -849,13 +872,16 @@ namespace oi
 
             template<typename T>
                 put_interface<T> create_put_interface(const std::string &module,
-                        const std::string &method
+                        const std::string &method, 
+                        int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
+                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
+
                         )throw(oi::exception)
                 {
                     put_interface<T> f;
                     try
                     {
-                        f.initialize(module, method, this);
+                        f.initialize(module, method, this, snd_timeout, rcv_timeout);
                     }
                     catch(oi::exception& ex)
                     {
@@ -867,13 +893,16 @@ namespace oi
 
             template<typename T>
                 get_interface<T> create_get_interface(const std::string &module,
-                        const std::string &method
+                        const std::string &method, 
+                        int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
+                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
+
                         )throw(oi::exception)
                 {
                     get_interface<T> f;
                     try
                     {
-                        f.initialize(module, method, this);
+                        f.initialize(module, method, this, snd_timeout, rcv_timeout);
                     }
                     catch(oi::exception& ex)
                     {
@@ -960,7 +989,7 @@ namespace oi
 
             try
             {
-                _comm->request(_module_name, _method_name, t, r);
+                _comm->request(_module_name, _method_name, t, r, _snd_timeout, _rcv_timeout);
             }
             catch(oi::exception& ex)
             {

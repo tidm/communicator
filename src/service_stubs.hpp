@@ -40,6 +40,7 @@ namespace oi
             OI_MSGPACK_DEFINE(_service_list)
             bool has_service(const std::string& str)throw(oi::exception);
             service_sign get(const std::string& str)throw(oi::exception);
+            std::set<std::string> get_methods()throw();
             void put( std::string module,
                     std::string method,
                     method_type type,

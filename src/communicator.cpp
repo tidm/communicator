@@ -28,28 +28,29 @@ namespace oi
         _proxy_thread_mutex.unlock();
     }
 
-    service_info communicator::get_service_list(const std::string& module)
+    service_info communicator::get_service_list(const std::string& module, bool use_cache)
     {
 
         dummy_msg d;
         service_info srv;
         bool sw = false;
-
-        _dst_setvice_list_gaurd.lock_shared();
+        if(use_cache == true)
         {
-            std::map<std::string, service_info>::iterator it = _dst_service_list.begin();
-            it = _dst_service_list.find(module);
-            if(it != _dst_service_list.end())
+            _dst_setvice_list_gaurd.lock_shared();
             {
-                srv = it->second;
-                sw = true;
+                std::map<std::string, service_info>::iterator it = _dst_service_list.begin();
+                it = _dst_service_list.find(module);
+                if(it != _dst_service_list.end())
+                {
+                    srv = it->second;
+                    sw = true;
+                }
             }
+            _dst_setvice_list_gaurd.unlock_shared();
         }
-        _dst_setvice_list_gaurd.unlock_shared();
-
         if(sw == false)
         {
-            request<dummy_msg, service_info>(module, SERVICE_INFO_METHOD_NAME , d, srv);
+            request<dummy_msg, service_info>(module, SERVICE_INFO_METHOD_NAME , d, srv, CHANNEL_SOCKET_SEND_TIMEOUT, CHANNEL_SOCKET_RECV_TIMEOUT);
             _dst_setvice_list_gaurd.lock();
             {
                 _dst_service_list[module] = srv; 
@@ -108,6 +109,43 @@ namespace oi
             usleep(200000);
         }
     }
+    bool communicator::is_remote_ready(const std::string & remote_module, const std::string & method_name)throw()
+    {
+        bool is_ready = false;
+
+        service_info srv; 
+        try{
+            srv = get_service_list(remote_module, false);
+            std::set<std::string> lst= srv.get_methods();
+            std::set<std::string>::iterator it = lst.find(method_name);
+            if(it != lst.end())
+            {
+                is_ready = true;
+            }
+        }
+        catch(...)
+        {
+            is_ready  = false;
+        }
+
+//        oi::get_interface<oi::com_type<int> > m_if;
+//
+//        try
+//        {
+//            m_if = create_get_interface<oi::com_type<int> >(remote_module, GET_STATE_METHOD_NAME , 50, 50);
+//            int res = m_if.call();
+//            if(static_cast<state>(res) == REGISTERED)
+//            {
+//                is_ready = true;
+//            }
+//        }
+//        catch(...)
+//        {
+//            is_ready = false;
+//        }
+        return is_ready;
+    }
+
 
     void communicator::initialize(const std::string &me)throw(oi::exception)
     {
@@ -129,18 +167,18 @@ namespace oi
         }
         catch(oi::exception& ex)
         {
-            ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception");
+            ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception registering service_info servive");
             throw ex;
         }
         catch(std::exception& ex)
         {
             oi::exception ox("std", "exception", ex.what());
-            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
+            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception registering service_info servive");
             throw ox;
         }
         catch(...)
         {
-            throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
+            throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception registering service_info servive.");
         }
     }
 
@@ -213,13 +251,16 @@ namespace oi
     }
 
     sig_interface communicator::create_sig_interface(const std::string &module,
-            const std::string &method
+            const std::string &method, 
+            int snd_timeout , 
+            int rcv_timeout 
+
             )throw (oi::exception)
     {
         sig_interface f;
         try
         {
-            f.initialize(module, method, this);
+            f.initialize(module, method, this, snd_timeout, rcv_timeout);
         }
         catch(oi::exception& ex)
         {

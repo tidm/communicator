@@ -14,8 +14,6 @@
 namespace oi
 {
     const int CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE = 200;
-    const int CHANNEL_SOCKET_RECV_TIMEOUT = 1000;
-    const int CHANNEL_SOCKET_SEND_TIMEOUT = 200;
     template<class T, class R>
         class msg_container
         {
@@ -62,6 +60,9 @@ namespace oi
 
             zmq::context_t* _context;
             std::string _ipc_path;
+            int _rcv_timeout;
+            int _snd_timeout;
+
 
             volatile bool _is_alive;
 
@@ -71,8 +72,8 @@ namespace oi
                 try{
                     sock = new zmq::socket_t(*_context, ZMQ_REQ);
                     sock->setsockopt(ZMQ_LINGER, &CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE, sizeof(CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE));
-                    sock->setsockopt(ZMQ_RCVTIMEO, &CHANNEL_SOCKET_RECV_TIMEOUT, sizeof(CHANNEL_SOCKET_RECV_TIMEOUT));
-                    sock->setsockopt(ZMQ_SNDTIMEO, &CHANNEL_SOCKET_SEND_TIMEOUT, sizeof(CHANNEL_SOCKET_SEND_TIMEOUT));
+                    sock->setsockopt(ZMQ_RCVTIMEO, &_rcv_timeout, sizeof(_rcv_timeout));
+                    sock->setsockopt(ZMQ_SNDTIMEO, &_snd_timeout, sizeof(_snd_timeout));
                     sock->connect(_ipc_path.c_str());
                     zmq_msg_util util(_srz_tool);
                     timespec t1, t2, t3;
@@ -134,15 +135,15 @@ namespace oi
                             }
                             catch(zmq::error_t & ex)
                             {
-                                msg->rsp->set_exception(std::string("unable to send message due to zmq::exception ") + ex.what());
+                                msg->rsp->set_exception(std::string("unable to receive message due to zmq::exception ") + ex.what());
                             }
                             catch(std::exception & ex)
                             {
-                                msg->rsp->set_exception(std::string("unable to send message due to std::exception ") + ex.what());
+                                msg->rsp->set_exception(std::string("unable to receive message due to std::exception ") + ex.what());
                             }
                             catch(...)
                             {
-                                msg->rsp->set_exception("unable to send message due to unknown exception ");
+                                msg->rsp->set_exception("unable to receive message due to unknown exception ");
                             }
 
                         }
@@ -154,8 +155,8 @@ namespace oi
                             delete sock;
                             sock = new zmq::socket_t(*_context, ZMQ_REQ);
                             sock->setsockopt(ZMQ_LINGER, &CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE, sizeof(CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE));
-                            sock->setsockopt(ZMQ_RCVTIMEO, &CHANNEL_SOCKET_RECV_TIMEOUT, sizeof(CHANNEL_SOCKET_RECV_TIMEOUT));
-                            sock->setsockopt(ZMQ_SNDTIMEO, &CHANNEL_SOCKET_SEND_TIMEOUT, sizeof(CHANNEL_SOCKET_SEND_TIMEOUT));
+                            sock->setsockopt(ZMQ_RCVTIMEO, &_rcv_timeout, sizeof(_rcv_timeout));
+                            sock->setsockopt(ZMQ_SNDTIMEO, &_snd_timeout, sizeof(_snd_timeout));
                             sock->connect(_ipc_path.c_str());
                             _stat.update(0, 0, false);
                         }
@@ -195,7 +196,7 @@ namespace oi
                 }
             }
         public:
-            channel(const std::string & ipc, zmq::context_t * cntx, serializer srz)
+            channel(const std::string & ipc, zmq::context_t * cntx, serializer srz, int snd_timeout, int rcv_timeout)
             {
                 _is_alive = false;
                 _ipc_path = ipc;
@@ -203,6 +204,8 @@ namespace oi
                 _sem = NULL;
                 _thread = NULL;
                 _srz_tool = srz;
+                _snd_timeout = snd_timeout;
+                _rcv_timeout = rcv_timeout;
             }
 
             ~channel()
