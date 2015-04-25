@@ -1,3 +1,5 @@
+#ifndef PARENT_HPP
+#define PARENT_HPP
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <sstream>
@@ -18,9 +20,13 @@ namespace oi
                 ar & p;
             }
         parent();
+        void set_p(int c)
+        {
+            p = c;
+        }
         virtual ~parent();
         int p;
 
     };
 }
-
+#endif
