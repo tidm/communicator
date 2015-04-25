@@ -1,3 +1,5 @@
+#ifndef CHILD_HPP
+#define CHILD_HPP
 #include "parent.hpp"
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -18,8 +20,13 @@ namespace oi
                 ar & boost::serialization::base_object<parent>(*this);
                 ar & c;
             }
+        void set_c(int x)
+        {
+            c = x;
+        }
         child();
         int c;
 
     };
 }
+#endif

@@ -1,5 +1,6 @@
 #include"communicator.hpp"
 #include "container.hpp"
+#include "child.hpp"
 int ii ;
     template<typename T>
 T get_int()
@@ -15,7 +16,11 @@ T get_data()
 {
     oi::container ct;
     ii++;
-    ct.set_data("child1",ii);
+    ct.id = ii;
+    oi::child * ch =new oi::child();
+    ch->set_p(ii+1);
+    ch->set_c(ii+2);
+    ct.set_data(ch);
     return ct;
 }
 
