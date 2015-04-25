@@ -37,3 +37,4 @@ oi_communicator_include_HEADERS = \
     service_stubs.hpp \
     zmq_msg_util.hpp \
     zmq.hpp
+
