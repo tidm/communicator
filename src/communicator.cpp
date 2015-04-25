@@ -1,4 +1,5 @@
 #include "communicator.hpp"
+#include<config.h>
 namespace oi
 {
     std::ostream& operator<<(std::ostream& os, const oi_err& o)
@@ -65,6 +66,7 @@ namespace oi
     {
         _state = NEW;
         _name = "";
+        _ipc_file_path = IPC_FILE_PATH;
     }
 
     std::map<std::string, cm_stat> communicator::get_channel_stat()throw(oi::exception)

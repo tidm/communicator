@@ -5,6 +5,7 @@ LT_LANG([C++])
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
+
 AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
@@ -42,5 +43,7 @@ AC_CONFIG_FILES([Makefile
 
 AC_SUBST([OI_COMMUNICATOR_SO_VERSION], [7:0:0])
 AC_SUBST([OI_COMMUNICATOR_API_VERSION], [7.0.0])
+
+AC_DEFINE_UNQUOTED(IPC_FILE_PATH, "${prefix}/var/run/", [directory in with ipc socket files will be created])
 
 AC_OUTPUT

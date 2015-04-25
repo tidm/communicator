@@ -1,5 +1,5 @@
 #include "comm_stubs.hpp"
-#include "child.hpp"
+#include "parent.hpp"
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -19,20 +19,9 @@ namespace oi
                 ar & pp;
             }
         container();
-        void set_data(std::string ch, int i)
+        void set_data(parent * pr)
         {
-            id = i;
-            if(ch == "child1")
-            {
-                child * cc = new child();
-                cc->p = i+1;
-                cc->c = i+2;
-                pp = cc;
-            }
-            else
-            {
-                throw std::runtime_error("invalid child type");
-            }
+            pp = pr;
         }
         container(const container&);
         container & operator=(const container&);

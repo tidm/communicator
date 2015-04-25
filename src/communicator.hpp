@@ -180,6 +180,7 @@ namespace oi
             std::string  _name;
             std::map<std::string, channel_base*> _channel_map;
             boost::mutex _channel_map_mutex;
+            std::string _ipc_file_path;
 
             volatile state _state;
 
@@ -198,7 +199,7 @@ namespace oi
 
                     std::string addr;
                     try{
-                        addr = std::string( "ipc://" +
+                        addr = std::string( "ipc://" + _ipc_file_path +
                                 module + "_" +
                                 method + "_" +
                                 std::string(typeid(T).name()) + "_" +

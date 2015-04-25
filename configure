@@ -14720,6 +14720,7 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
   fi
 
 
+
 am__api_version='1.11'
 
 # Find a good install program.  We prefer a C program (faster),
@@ -18753,6 +18754,12 @@ ac_config_files="$ac_config_files Makefile src/Makefile test/Makefile oi_communi
 OI_COMMUNICATOR_SO_VERSION=7:0:0
 
 OI_COMMUNICATOR_API_VERSION=7.0.0
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define IPC_FILE_PATH "${prefix}/var/run/"
+_ACEOF
 
 
 cat >confcache <<\_ACEOF
