@@ -175,3 +175,19 @@ Session.vim
 
 # Debug files
 *.dSYM/
+
+
+
+Makefile
+config.h
+config.log
+config.status
+libtool
+oi_communicator.pc
+src/.deps/
+src/Makefile
+test/.deps/
+test/Makefile
+test/client
+test/server
+#
