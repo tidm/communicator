@@ -297,14 +297,13 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 AM_CFLAGS = --pedantic
 AM_CXXFLAGS = --pedantic
 AM_CPPFLAGS = \
+    -Wall \
     $(OI_EXCEPTION_CFLAGS) \
 	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
     $(BOOST_THREAD_CFLAGS) \
-    $(BOOST_SYSTEM_CFLAGS) \
-	-Wall \
-	-Werror
+    $(BOOST_SYSTEM_CFLAGS)
 
 lib_LTLIBRARIES = liboi_communicator.la
 liboi_communicator_la_SOURCES = \
