@@ -100,7 +100,8 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 liboi_communicator_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_liboi_communicator_la_OBJECTS = channel_base.lo channel_stat.lo \
 	comm_stubs.lo communicator.lo service_stubs.lo zmq_msg_util.lo
 liboi_communicator_la_OBJECTS = $(am_liboi_communicator_la_OBJECTS)
@@ -212,6 +213,8 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OI_COMMON_CFLAGS = @OI_COMMON_CFLAGS@
+OI_COMMON_LIBS = @OI_COMMON_LIBS@
 OI_COMMUNICATOR_API_VERSION = @OI_COMMUNICATOR_API_VERSION@
 OI_COMMUNICATOR_SO_VERSION = @OI_COMMUNICATOR_SO_VERSION@
 OI_EXCEPTION_CFLAGS = @OI_EXCEPTION_CFLAGS@
@@ -295,6 +298,7 @@ AM_CFLAGS = --pedantic
 AM_CXXFLAGS = --pedantic
 AM_CPPFLAGS = \
     $(OI_EXCEPTION_CFLAGS) \
+	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
     $(BOOST_THREAD_CFLAGS) \
@@ -313,6 +317,7 @@ liboi_communicator_la_LDFLAGS = -version-info $(OI_COMMUNICATOR_SO_VERSION)
 liboi_communicator_la_LIBADD = \
     -lmsgpack \
 	$(OI_EXCEPTION_LIBS) \
+	$(OI_COMMON_LIBS) \
     $(ZMQ_LIBS) \
 	$(BOOST_SERIALIZATION_LIBS) \
     $(BOOST_THREAD_LIBS) \

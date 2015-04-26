@@ -3,6 +3,7 @@ AM_CFLAGS = --pedantic
 AM_CXXFLAGS = --pedantic
 AM_CPPFLAGS = \
     $(OI_EXCEPTION_CFLAGS) \
+	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
     $(BOOST_THREAD_CFLAGS) \
@@ -21,6 +22,7 @@ liboi_communicator_la_LDFLAGS = -version-info $(OI_COMMUNICATOR_SO_VERSION)
 liboi_communicator_la_LIBADD = \
     -lmsgpack \
 	$(OI_EXCEPTION_LIBS) \
+	$(OI_COMMON_LIBS) \
     $(ZMQ_LIBS) \
 	$(BOOST_SERIALIZATION_LIBS) \
     $(BOOST_THREAD_LIBS) \

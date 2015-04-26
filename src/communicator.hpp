@@ -3,6 +3,7 @@
 #include"channel.hpp"
 #include"com_type.hpp"
 #include"service_stubs.hpp"
+#include<common.hpp>
 #include<typeinfo>
 #include<vector>
 #include<time.h>
@@ -199,12 +200,14 @@ namespace oi
 
                     std::string addr;
                     try{
+
                         addr = std::string( "ipc://" + _ipc_file_path +
+                                common_utils::get_md5(
                                 module + "_" +
                                 method + "_" +
                                 std::string(typeid(T).name()) + "_" +
                                 std::string(typeid(R).name()) + "_" +
-                                boost::lexical_cast<std::string>(static_cast<int>(srz)) +
+                                boost::lexical_cast<std::string>(static_cast<int>(srz))) +
                                 ".ipc"
                                 );
                     }
