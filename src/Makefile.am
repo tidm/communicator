@@ -6,8 +6,9 @@ AM_CPPFLAGS = \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
     $(BOOST_THREAD_CFLAGS) \
-    $(BOOST_SYSTEM_CFLAGS)
-
+    $(BOOST_SYSTEM_CFLAGS) \
+	-Wall \
+	-Werror
 lib_LTLIBRARIES = liboi_communicator.la
 liboi_communicator_la_SOURCES = \
     channel_base.cpp \
