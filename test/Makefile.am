@@ -3,6 +3,7 @@ AM_CFLAGS = --pedantic
 AM_CXXFLAGS = --pedantic
 AM_CPPFLAGS = -I../src/ \
     $(OI_EXCEPTION_CFLAGS) \
+	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
     $(BOOST_THREAD_CFLAGS) \
@@ -12,6 +13,7 @@ AM_CPPFLAGS = -I../src/ \
 LDADD=../src/.libs/liboi_communicator.a \
     -lmsgpack \
 	$(OI_EXCEPTION_LIBS) \
+	$(OI_COMMON_LIBS) \
     $(ZMQ_LIBS) \
 	$(BOOST_SERIALIZATION_LIBS) \
     $(BOOST_THREAD_LIBS) \
