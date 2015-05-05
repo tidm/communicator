@@ -24,7 +24,7 @@ namespace oi
         {
             _val = v;
         }
-        operator R()
+        operator R&()
         {
             return _val;
         }

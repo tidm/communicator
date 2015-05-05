@@ -10,6 +10,19 @@ void shutdown(oi::communicator * cm)
 }
 int main()
 {
+//   oi::com_type< std::vector<int> > v;
+//   ((std::vector<int>&)v).push_back(123);;
+//   ((std::vector<int>&)v).push_back(123);;
+//   ((std::vector<int>&)v).push_back(123);;
+//   ((std::vector<int>)v).push_back(123);;
+//   ((std::vector<int>)v).push_back(123);;
+//   ((std::vector<int>)v).push_back(123);;
+//   static_cast<std::vector<int>&>(v).push_back(20);
+//   std::cerr << ((std::vector<int>&)v).size() << std::endl;
+//
+//return 0;
+
+
     int count = 10;
     oi::communicator cm;
     cm.initialize("notification");
