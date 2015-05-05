@@ -277,6 +277,7 @@ namespace oi
             os << "\n";
             i++;
         }
+        return os;
 
     }
 

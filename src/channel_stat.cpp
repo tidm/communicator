@@ -15,6 +15,7 @@ namespace oi
         os << std::fixed << std::setprecision(2) <<  "  success:"<< s.success <<  " failed:" << s.failed << 
             " total:("<< s.avg_total << "us, " << s.std_total << "us) "
             " srz:("<< s.avg_srz << "us, " << s.std_srz << "us) ";
+        return os;
     }
     channel_stat::channel_stat()
     {
