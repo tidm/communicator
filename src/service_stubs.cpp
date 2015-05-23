@@ -2,30 +2,30 @@
 namespace oi
 {
 
-    std::ostream& operator<<(std::ostream& os, const method_type & m)
-    {
-        switch(m)
-        {
-            case MTH_REQ:
-                os << "Request-Response";
-                break;
-            case MTH_GET:
-                os << "Getter";
-                break;
-            case MTH_PUT:
-                os << "Putter";
-                break;
-            case MTH_SIG:
-                os << "Signal";
-                break;
-            case MTH_UNKNOWN :
-                os << "Unknown";
-                break;
-            default:
-                os << "Invalid Method!";
-        };
-        return os;
-    }
+//    std::ostream& operator<<(std::ostream& os, const method_type & m)
+//    {
+//        switch(m)
+//        {
+//            case MTH_REQ:
+//                os << "Request-Response";
+//                break;
+//            case MTH_GET:
+//                os << "Getter";
+//                break;
+//            case MTH_PUT:
+//                os << "Putter";
+//                break;
+//            case MTH_SIG:
+//                os << "Signal";
+//                break;
+//            case MTH_UNKNOWN :
+//                os << "Unknown";
+//                break;
+//            default:
+//                os << "Invalid Method!";
+//        };
+//        return os;
+//    }
 
 
     service_sign::service_sign()
