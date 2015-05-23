@@ -3,6 +3,7 @@ AM_CFLAGS = --pedantic
 AM_CXXFLAGS = --pedantic
 AM_CPPFLAGS = \
     -Wall \
+	-Werror \
     $(OI_EXCEPTION_CFLAGS) \
 	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \

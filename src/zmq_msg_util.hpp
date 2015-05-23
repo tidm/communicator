@@ -24,7 +24,13 @@
 
 namespace oi
 {
-    enum serializer{SRZ_UNKNOWN = 0, SRZ_MSGPACK = 1, SRZ_BOOST = 2};
+    typedef int serializer;
+
+    const serializer SRZ_UNKNOWN = 0 ;
+    const serializer SRZ_MSGPACK = 1;
+    const serializer SRZ_BOOST = 2;
+
+    //enum serializer{SRZ_UNKNOWN = 0, SRZ_MSGPACK = 1, SRZ_BOOST = 2};
 
     class zmq_msg_util
     {
