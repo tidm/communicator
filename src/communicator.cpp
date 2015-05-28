@@ -69,6 +69,74 @@ namespace oi
         _ipc_file_path = IPC_FILE_PATH;
     }
 
+    std::map<std::string, cm_info> communicator::get_service_stat()throw(oi::exception)
+    {
+        std::map<std::string, cm_info> stat;
+        std::map<std::string, transmission_stat*>::iterator it;
+
+        service_sign sgn ;
+
+        _service_stat_list_guard.lock();
+        try
+        {
+            for(it = _service_stat_list.begin(); it != _service_stat_list.end(); it++)
+            {
+                _service_info_gaurd.lock_shared();
+                sgn = _service_info.get(it->first);
+                _service_info_gaurd.unlock_shared();
+                stat[sgn.module + ":" + sgn.method] = it->second->get_stat();
+            }
+        }
+        catch(std::exception& ex)
+        {
+            oi::exception ox("std", "exception", ex.what());
+            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
+            _service_stat_list_guard.unlock();
+            throw ox;
+        }
+        catch(...)
+        {
+            _service_stat_list_guard.unlock();
+            throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
+        }
+        _service_stat_list_guard.unlock();
+        return stat;
+    }
+
+    std::map<std::string, cm_info> communicator::get_interface_stat()throw(oi::exception)
+    {
+        std::map<std::string, cm_info> stat;
+        std::string module;
+        std::string method;
+        _channel_map_mutex.lock();
+        {
+            try
+            {
+                std::map<std::string, channel_base*>::iterator it;
+                for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                {
+                    module = it->second->get_module();
+                    method = it->second->get_method();
+
+                    stat[module + ":" + method] = it->second->get_ch_stat();
+                }
+            }
+            catch(std::exception& ex)
+            {
+                oi::exception ox("std", "exception", ex.what());
+                ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
+                _channel_map_mutex.unlock();
+                throw ox;
+            }
+            catch(...)
+            {
+                _channel_map_mutex.unlock();
+                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
+            }
+        }
+        _channel_map_mutex.unlock();
+        return stat;
+    }
     std::map<std::string, cm_stat> communicator::get_channel_stat()throw(oi::exception)
     {
         std::map<std::string, cm_stat> stat;
@@ -130,21 +198,21 @@ namespace oi
             is_ready  = false;
         }
 
-//        oi::get_interface<oi::com_type<int> > m_if;
-//
-//        try
-//        {
-//            m_if = create_get_interface<oi::com_type<int> >(remote_module, GET_STATE_METHOD_NAME , 50, 50);
-//            int res = m_if.call();
-//            if(static_cast<state>(res) == REGISTERED)
-//            {
-//                is_ready = true;
-//            }
-//        }
-//        catch(...)
-//        {
-//            is_ready = false;
-//        }
+        //        oi::get_interface<oi::com_type<int> > m_if;
+        //
+        //        try
+        //        {
+        //            m_if = create_get_interface<oi::com_type<int> >(remote_module, GET_STATE_METHOD_NAME , 50, 50);
+        //            int res = m_if.call();
+        //            if(static_cast<state>(res) == REGISTERED)
+        //            {
+        //                is_ready = true;
+        //            }
+        //        }
+        //        catch(...)
+        //        {
+        //            is_ready = false;
+        //        }
         return is_ready;
     }
 

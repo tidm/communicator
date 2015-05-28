@@ -1,5 +1,6 @@
 #include"communicator.hpp"
 #include "container.hpp"
+#include <thread>
 void signal()
 {
     std::cerr << "signalled " << std::endl;
@@ -8,7 +9,23 @@ void shutdown(oi::communicator * cm)
 {
     cm->shutdown();
 }
-int main()
+oi::communicator cm;
+void get_stat()
+{
+    std::map<std::string, oi::cm_info> m;
+    std::map<std::string, oi::cm_info>::iterator it;
+    while(1)
+    {
+        m = cm.get_interface_stat();
+        for(it = m.begin(); it != m.end(); it++)
+        {
+            std::cerr << it->first << ":" << it->second << std::endl;
+        }
+        std::cerr << "---------------------------------" << std::endl;
+        sleep(1);
+    }
+}
+int main(int argc, char* argv[])
 {
 //   oi::com_type< std::vector<int> > v;
 //   ((std::vector<int>&)v).push_back(123);;
@@ -22,9 +39,14 @@ int main()
 //
 //return 0;
 
+    if(argc < 2)
+    {
+        std::cerr << "usage: " << argv[0] << " [no. of requests]" << std::endl;
+        exit(1);
+    }
 
-    int count = 10;
-    oi::communicator cm;
+
+    int count = atoi(argv[1]);
     cm.initialize("notification");
 
     boost::function<void(void)> f_sig = boost::bind( &signal);
@@ -42,19 +64,22 @@ int main()
 
     oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data");
 
+    std::thread th(get_stat);
+
 
     for(int j=0 ; j< count; j++)
     {
         oi::container rsp;
         try{
             rsp = m_if_cont.call();
-            std::cerr << "rsp: " << rsp << std::endl;
+//          std::cerr << "rsp: " << rsp << std::endl;
         }
         catch(std::exception & ex)
         {
             std::cerr << ex.what() << std::endl;
         }
     }
+
     std::cerr << "sending SHUTDOWN to server" << std::endl;
     m_if_kill.call();
     cm.wait();
