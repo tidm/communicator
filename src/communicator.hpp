@@ -196,6 +196,8 @@ namespace oi
             std::map<std::string, transmission_stat*> _service_stat_list;
             boost::mutex _service_stat_list_guard;
 
+            boost::function<void(const oi::exception&)> _exception_handler;
+
 
             template<typename T, typename R>
                 std::string generate_ipc_addr(const std::string &module,
@@ -421,11 +423,30 @@ namespace oi
                                 T t;
                                 R r;
                                 //recieving a message
-                                sock.recv(&req);
+                                try
+                                {
+                                    sock.recv(&req);
+                                }
+                                catch(zmq::error_t & ex)
+                                {
+                                    oi::exception ox("zmq", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to receive data from client");
+                                    throw ox;
+                                }
 
                                 auto s1 = std::chrono::system_clock::now();
                                 //de-serialization the request
-                                util.to_data_msg<T>(req, t);
+                                try
+                                {
+                                    util.to_data_msg<T>(req, t);
+                                }
+                                catch(std::exception& ex)
+                                {
+                                    oi::exception ox("std", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unable to de-serialize received data from client: ") + typeid(T).name()).c_str());
+                                    throw ox;
+                                }
+
 
                                 auto s2 = std::chrono::system_clock::now();
                                 //processing the request
@@ -434,11 +455,28 @@ namespace oi
                                 auto s3 = std::chrono::system_clock::now();
                                 //serialization of the response
                                 zmq::message_t* rsp;
+                                try
+                                {
                                 rsp = util.to_zmq_msg<R>(r);
+                                }
+                                catch(std::exception& ex)
+                                {
+                                    oi::exception ox("std", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unable to serialize data to send as response: ") + typeid(R).name()).c_str());
+                                    throw ox;
+                                }
 
                                 auto s4 = std::chrono::system_clock::now();
                                 //sending the response
-                                sock.send(*rsp);
+                                try{
+                                    sock.send(*rsp);
+                                }
+                                catch(zmq::error_t & ex)
+                                {
+                                    oi::exception ox("zmq", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to send data to client");
+                                    throw ox;
+                                }
                                 delete rsp;
 
                                  total   = s4 - s1;
@@ -451,12 +489,6 @@ namespace oi
                                                                     process.count() * 1000000.0,
                                                                     true);
                             }
-                        }
-                        catch(zmq::error_t & ex)
-                        {
-                            oi::exception ox("std", "exception", ex.what());
-                            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled zmq::exception");
-                            throw ox;
                         }
                         catch(oi::exception& ex)
                         {
@@ -479,8 +511,14 @@ namespace oi
                     {
                         if(_state == READY )
                         {
-                            ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception");
-                            throw ex;
+                            if(!_exception_handler.empty())
+                            {
+                                _exception_handler(ex);
+                            }
+                            else
+                            {
+                                throw ex;
+                            }
                         }
                     }
                 }
@@ -874,12 +912,12 @@ namespace oi
                 }
         public:
             communicator()throw();
+            void initialize(const std::string &me, const boost::function<void(const oi::exception&)> & exception_handler = NULL)throw(oi::exception);
+            void wait()throw(oi::exception);
+            bool is_remote_ready(const std::string& module, const std::string& method)throw();
             std::map<std::string, cm_stat> get_channel_stat()throw(oi::exception);
             std::map<std::string, cm_info> get_service_stat()throw(oi::exception);
             std::map<std::string, cm_info> get_interface_stat()throw(oi::exception);
-            void initialize(const std::string &me)throw(oi::exception);
-            void wait()throw(oi::exception);
-            bool is_remote_ready(const std::string& module, const std::string& method)throw();
             void finalize()throw();
             void shutdown()throw();
             ~communicator()throw();

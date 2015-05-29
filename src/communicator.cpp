@@ -217,7 +217,7 @@ namespace oi
     }
 
 
-    void communicator::initialize(const std::string &me)throw(oi::exception)
+    void communicator::initialize(const std::string &me, const boost::function<void(const oi::exception&)> & exception_handler)throw(oi::exception)
     {
         if(_state != NEW)
         {
@@ -228,6 +228,7 @@ namespace oi
             throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid module name : '")+ me + "'").c_str());
         }
         _name = me;
+        _exception_handler = exception_handler;
 
         _state = READY;
         try
