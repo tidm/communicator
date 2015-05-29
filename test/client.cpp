@@ -23,7 +23,7 @@ void get_stat()
             std::cerr << it->first << ":" << it->second << std::endl;
         }
         std::cerr << "---------------------------------" << std::endl;
-        sleep(3);
+        sleep(1);
     }
 }
 

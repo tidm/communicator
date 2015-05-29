@@ -17,7 +17,14 @@ namespace oi
     }
     void stat::set(uint64_t val)
     {
-        min = std::min(val, min);
+        if(min == 0)
+        {
+            min = val;
+        }
+        else
+        {
+            min = std::min(val, min);
+        }
         max = std::max(val, max);
         sum += val;
         sum_2 += val * val;
