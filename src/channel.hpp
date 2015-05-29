@@ -11,6 +11,7 @@
 #include<queue>
 #include<map>
 #include "channel_base.hpp"
+#include <chrono>
 namespace oi
 {
     const int CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE = 200;
@@ -76,10 +77,14 @@ namespace oi
                     sock->setsockopt(ZMQ_SNDTIMEO, &_snd_timeout, sizeof(_snd_timeout));
                     sock->connect(_ipc_path.c_str());
                     zmq_msg_util util(_srz_tool);
-                    timespec t1, t2, t3;
+                    timespec t1, t2, t3;//SHOULD BE REMOVED IF only get_ch_stat is used
                     uint64_t t_srz, t_total;
                     bool is_sent = false;
                     bool is_recvd = false;
+                    std::chrono::duration<double> total ;
+                    std::chrono::duration<double> srz_req;
+                    std::chrono::duration<double> process;
+                    std::chrono::duration<double> srz_rsp;
                     while(_is_alive)
                     {
                         zmq::message_t* req;
@@ -97,10 +102,14 @@ namespace oi
                         }
                         _mutex.unlock();
 
-                        clock_gettime(CLOCK_REALTIME, &t1);
+                        clock_gettime(CLOCK_REALTIME, &t1);//SHOULD BE REMOVED IF only get_ch_stat is used
+
+                        auto s1 = std::chrono::system_clock::now();
                         req = util.to_zmq_msg<T>(*(msg->req));
-                        clock_gettime(CLOCK_REALTIME, &t2);
-                        t_srz = (t2.tv_sec - t1.tv_sec)*1000000.0 + (t2.tv_nsec - t1.tv_nsec)/1000.0;
+                        auto s2 = std::chrono::system_clock::now();
+                        
+                        clock_gettime(CLOCK_REALTIME, &t2);//SHOULD BE REMOVED IF only get_ch_stat is used
+                        t_srz = (t2.tv_sec - t1.tv_sec)*1000000.0 + (t2.tv_nsec - t1.tv_nsec)/1000.0;//SHOULD BE REMOVED IF only get_ch_stat is used
 
                         is_sent = false;
                         is_recvd = false;
@@ -128,10 +137,17 @@ namespace oi
                             zmq::message_t rsp;
                             try{
                                 sock->recv(&rsp);
+                                auto s3 = std::chrono::system_clock::now();
                                 is_recvd = true;
-                                clock_gettime(CLOCK_REALTIME, &t2);
+                                clock_gettime(CLOCK_REALTIME, &t2);//SHOULD BE REMOVED IF only get_ch_stat is used
                                 util.to_data_msg<R>(rsp, *(msg->rsp));
-                                clock_gettime(CLOCK_REALTIME, &t3);
+                                clock_gettime(CLOCK_REALTIME, &t3);//SHOULD BE REMOVED IF only get_ch_stat is used
+                                auto s4 = std::chrono::system_clock::now();
+                                
+                                total   = s4 - s1;
+                                srz_req = s2 - s1;
+                                process = s3 - s2;
+                                srz_rsp = s4 - s3;
                             }
                             catch(zmq::error_t & ex)
                             {
@@ -158,13 +174,20 @@ namespace oi
                             sock->setsockopt(ZMQ_RCVTIMEO, &_rcv_timeout, sizeof(_rcv_timeout));
                             sock->setsockopt(ZMQ_SNDTIMEO, &_snd_timeout, sizeof(_snd_timeout));
                             sock->connect(_ipc_path.c_str());
-                            _stat.update(0, 0, false);
+                            _stat.update(0, 0, false);//SHOULD BE REMOVED IF only get_ch_stat is used
+                            _ch_stat.update(0, 0, 0, 0, false);
                         }
                         else
                         {
-                            t_srz += (t3.tv_sec - t2.tv_sec)*1000000.0 + (t3.tv_nsec - t2.tv_nsec)/1000.0;
-                            t_total = (t3.tv_sec - t1.tv_sec)*1000000.0 + (t3.tv_nsec - t1.tv_nsec)/1000.0;
-                            _stat.update(t_total, t_srz, true);
+                            t_srz += (t3.tv_sec - t2.tv_sec)*1000000.0 + (t3.tv_nsec - t2.tv_nsec)/1000.0;//SHOULD BE REMOVED IF only get_ch_stat is used
+                            t_total = (t3.tv_sec - t1.tv_sec)*1000000.0 + (t3.tv_nsec - t1.tv_nsec)/1000.0;//SHOULD BE REMOVED IF only get_ch_stat is used
+                            _stat.update(t_total, t_srz, true);//SHOULD BE REMOVED IF only get_ch_stat is used
+
+                            _ch_stat.update(total.count() * 1000000.0,
+                                    srz_req.count() * 1000000.0, 
+                                    srz_rsp.count() * 1000000.0,
+                                    process.count() * 1000000.0,
+                                    true);
                         }
                         delete req;
 
@@ -196,7 +219,13 @@ namespace oi
                 }
             }
         public:
-            channel(const std::string & ipc, zmq::context_t * cntx, serializer srz, int snd_timeout, int rcv_timeout)
+            channel(const std::string &module,
+                    const std::string &method,
+                    const std::string & ipc, 
+                    zmq::context_t * cntx, 
+                    serializer srz, 
+                    int snd_timeout, 
+                    int rcv_timeout):channel_base(module, method)
             {
                 _is_alive = false;
                 _ipc_path = ipc;
@@ -210,6 +239,7 @@ namespace oi
 
             ~channel()
             {
+
                 if(_is_alive == true)
                 {
                     close();

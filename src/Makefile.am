@@ -17,6 +17,7 @@ liboi_communicator_la_SOURCES = \
     comm_stubs.cpp \
     communicator.cpp \
     service_stubs.cpp \
+	cm_stat.cpp \
     zmq_msg_util.cpp
 
 liboi_communicator_la_LDFLAGS = -version-info $(OI_COMMUNICATOR_SO_VERSION)
@@ -37,6 +38,7 @@ oi_communicator_include_HEADERS = \
     comm_stubs.hpp \
     communicator.hpp \
     com_type.hpp \
+	cm_stat.hpp \
     service_stubs.hpp \
     zmq_msg_util.hpp \
     zmq.hpp

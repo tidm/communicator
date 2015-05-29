@@ -2,7 +2,9 @@
 #define COMMUNICATIOR_HPP
 #include"channel.hpp"
 #include"com_type.hpp"
+#include"cm_stat.hpp"
 #include"service_stubs.hpp"
+#include <chrono>
 #include<common.hpp>
 #include<typeinfo>
 #include<vector>
@@ -191,6 +193,9 @@ namespace oi
             std::map<std::string, service_info> _dst_service_list;
             boost::shared_mutex _dst_setvice_list_gaurd;
 
+            std::map<std::string, transmission_stat*> _service_stat_list;
+            boost::mutex _service_stat_list_guard;
+
 
             template<typename T, typename R>
                 std::string generate_ipc_addr(const std::string &module,
@@ -373,6 +378,8 @@ namespace oi
                         const std::string &method_name)throw()
                 {
                     try{
+                        
+
                         zmq::socket_t sock(_context, ZMQ_REP);
                         sock.setsockopt(ZMQ_LINGER, &SOCKET_TIMEOUT_VALUE, sizeof(SOCKET_TIMEOUT_VALUE));
                         try{
@@ -396,6 +403,15 @@ namespace oi
                         }
 
                         zmq_msg_util util(srz);
+                        std::chrono::duration<double> total ;
+                        std::chrono::duration<double> srz_req;
+                        std::chrono::duration<double> process;
+                        std::chrono::duration<double> srz_rsp;
+                        transmission_stat * srv_stat;
+                        _service_stat_list_guard.lock();
+                            srv_stat = _service_stat_list[ipc_addr];
+                        _service_stat_list_guard.unlock();
+
 
                         try
                         {
@@ -404,18 +420,36 @@ namespace oi
                                 zmq::message_t req;
                                 T t;
                                 R r;
+                                //recieving a message
                                 sock.recv(&req);
 
+                                auto s1 = std::chrono::system_clock::now();
+                                //de-serialization the request
                                 util.to_data_msg<T>(req, t);
 
+                                auto s2 = std::chrono::system_clock::now();
+                                //processing the request
                                 generic_handler<T,R>(t, boost::ref(r), ipc_addr);
 
+                                auto s3 = std::chrono::system_clock::now();
+                                //serialization of the response
                                 zmq::message_t* rsp;
                                 rsp = util.to_zmq_msg<R>(r);
 
+                                auto s4 = std::chrono::system_clock::now();
+                                //sending the response
                                 sock.send(*rsp);
                                 delete rsp;
 
+                                 total   = s4 - s1;
+                                 srz_req = s2 - s1;
+                                 process = s3 - s2;
+                                 srz_rsp = s4 - s3;
+                                 srv_stat->update(total.count() * 1000000.0,
+                                                                    srz_req.count() * 1000000.0, 
+                                                                    srz_rsp.count() * 1000000.0,
+                                                                    process.count() * 1000000.0,
+                                                                    true);
                             }
                         }
                         catch(zmq::error_t & ex)
@@ -508,8 +542,8 @@ namespace oi
                         }
 
                         try{
-                             ipc_addr =    generate_ipc_addr<T,R>(_name, method_name, srz);
-                             inproc_addr = generate_inproc_addr<T,R>(_name, method_name, srz);
+                            ipc_addr =    generate_ipc_addr<T,R>(_name, method_name, srz);
+                            inproc_addr = generate_inproc_addr<T,R>(_name, method_name, srz);
                         }
                         catch(std::exception& ex)
                         {
@@ -708,7 +742,7 @@ namespace oi
                         if(_channel_map.find(ipc_str) == _channel_map.end())
                         {
 
-                            chnl = new channel<T,R>(ipc_str, &_context, srz, snd_timeout, rcv_timeout);
+                            chnl = new channel<T,R>(module, method, ipc_str, &_context, srz, snd_timeout, rcv_timeout);
                             chnl->init();
                             _channel_map[ipc_str] = chnl;
                         }
@@ -785,6 +819,11 @@ namespace oi
                     {
                         std::string ipc_path = generate_ipc_addr<T,R>(_name, method_name, srz);
 
+                        _service_stat_list_guard.lock();
+                        _service_stat_list[ipc_path] = new transmission_stat();
+                        _service_stat_list_guard.unlock();
+
+
                         _service_info_gaurd.lock();
                         _service_info.put( _name,
                                 method_name,
@@ -836,6 +875,8 @@ namespace oi
         public:
             communicator()throw();
             std::map<std::string, cm_stat> get_channel_stat()throw(oi::exception);
+            std::map<std::string, cm_info> get_service_stat()throw(oi::exception);
+            std::map<std::string, cm_info> get_interface_stat()throw(oi::exception);
             void initialize(const std::string &me)throw(oi::exception);
             void wait()throw(oi::exception);
             bool is_remote_ready(const std::string& module, const std::string& method)throw();

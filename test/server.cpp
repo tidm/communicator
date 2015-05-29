@@ -46,7 +46,18 @@ int main()
     boost::function<void(void)> f = boost::bind(&shutdown,&cm);
     cm.register_callback(f, "shutdown",1,oi::SRZ_MSGPACK);
 
-
+    std::map<std::string, oi::cm_info> m;
+    std::map<std::string, oi::cm_info>::iterator it;
+while(1)
+{
+    m = cm.get_service_stat();
+    for(it = m.begin(); it != m.end(); it++)
+    {
+        std::cerr << it->first << ":" << it->second << std::endl;
+    }
+    std::cerr << "---------------------------------" << std::endl;
+    sleep(1);
+}
 
 //    oi::sig_interface m_if;
 //    m_if = cm.create_sig_interface("notification", "signal");

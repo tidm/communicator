@@ -1,5 +1,6 @@
 #include"communicator.hpp"
 #include "container.hpp"
+#include <thread>
 void signal()
 {
     std::cerr << "signalled " << std::endl;
@@ -8,7 +9,44 @@ void shutdown(oi::communicator * cm)
 {
     cm->shutdown();
 }
-int main()
+oi::communicator cm;
+bool is_done;
+void get_stat()
+{
+    std::map<std::string, oi::cm_info> m;
+    std::map<std::string, oi::cm_info>::iterator it;
+    while(!is_done)
+    {
+        m = cm.get_interface_stat();
+        for(it = m.begin(); it != m.end(); it++)
+        {
+            std::cerr << it->first << ":" << it->second << std::endl;
+        }
+        std::cerr << "---------------------------------" << std::endl;
+        sleep(1);
+    }
+}
+
+void call_core_get_data(int count)
+{
+    oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data", 10,10);
+
+    for(int j=0 ; j< count; j++)
+    {
+        oi::container rsp;
+        try{
+            rsp = m_if_cont.call();
+//          std::cerr << "rsp: " << rsp << std::endl;
+        }
+        catch(std::exception & ex)
+        {
+          //  std::cerr << ex.what() << std::endl;
+        }
+    }
+
+}
+
+int main(int argc, char* argv[])
 {
 //   oi::com_type< std::vector<int> > v;
 //   ((std::vector<int>&)v).push_back(123);;
@@ -22,9 +60,15 @@ int main()
 //
 //return 0;
 
+    if(argc < 3)
+    {
+        std::cerr << "usage: " << argv[0] << " [no. of threads] [no. of requests]" << std::endl;
+        exit(1);
+    }
 
-    int count = 10;
-    oi::communicator cm;
+
+    int count = atoi(argv[2]);
+    int thread_count= atoi(argv[1]);
     cm.initialize("notification");
 
     boost::function<void(void)> f_sig = boost::bind( &signal);
@@ -38,26 +82,24 @@ int main()
     
     oi::sig_interface m_if_kill;
     m_if_kill = cm.create_sig_interface("core", "shutdown");
-    
 
-    oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data");
-
-
-    for(int j=0 ; j< count; j++)
+    std::thread th(get_stat);
+    std::vector<std::thread*> thread_list;
+    for(int i=0; i< thread_count; i++)
     {
-        oi::container rsp;
-        try{
-            rsp = m_if_cont.call();
-            std::cerr << "rsp: " << rsp << std::endl;
-        }
-        catch(std::exception & ex)
-        {
-            std::cerr << ex.what() << std::endl;
-        }
+        thread_list.push_back(new std::thread(call_core_get_data, count));
     }
-    std::cerr << "sending SHUTDOWN to server" << std::endl;
-    m_if_kill.call();
-    cm.wait();
+
+    for(int i=0; i< thread_count; i++)
+    {
+        thread_list[i]->join();
+    }
+    is_done = true;
+    th.join();
+
+//    std::cerr << "sending SHUTDOWN to server" << std::endl;
+//    m_if_kill.call();
+  //  cm.wait();
     cm.finalize();
     return 0;
 }

@@ -103,7 +103,8 @@ liboi_communicator_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_liboi_communicator_la_OBJECTS = channel_base.lo channel_stat.lo \
-	comm_stubs.lo communicator.lo service_stubs.lo zmq_msg_util.lo
+	comm_stubs.lo communicator.lo service_stubs.lo cm_stat.lo \
+	zmq_msg_util.lo
 liboi_communicator_la_OBJECTS = $(am_liboi_communicator_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -313,6 +314,7 @@ liboi_communicator_la_SOURCES = \
     comm_stubs.cpp \
     communicator.cpp \
     service_stubs.cpp \
+	cm_stat.cpp \
     zmq_msg_util.cpp
 
 liboi_communicator_la_LDFLAGS = -version-info $(OI_COMMUNICATOR_SO_VERSION)
@@ -333,6 +335,7 @@ oi_communicator_include_HEADERS = \
     comm_stubs.hpp \
     communicator.hpp \
     com_type.hpp \
+	cm_stat.hpp \
     service_stubs.hpp \
     zmq_msg_util.hpp \
     zmq.hpp
@@ -414,6 +417,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/channel_base.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/channel_stat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cm_stat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm_stubs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/communicator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/service_stubs.Plo@am__quote@
