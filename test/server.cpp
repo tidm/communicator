@@ -29,11 +29,16 @@ void shutdown(oi::communicator * cm)
     cm->shutdown();
 }
 
+void exp_handler(const oi::exception & ex)
+{
+    std::cerr << "****************************************\n" << ex.what() << std::endl;
+}
+
 int main()
 {
     ii = 1;
     oi::communicator cm;
-    cm.initialize("core");
+    cm.initialize("core", exp_handler);
     int count = 10000;
     
     boost::function<oi::com_type<int>(void)> f_get_int;
