@@ -48,11 +48,11 @@ namespace oi
             {
                 if(modulename.empty())
                 {
-                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid module name provided: ")+_module_name).c_str());
+                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__,  "invalid module name `%'",modulename);
                 }
                 if(methodname.empty())
                 {
-                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid method name provided: ")+_module_name).c_str());
+                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid method name `%'", _module_name);
                 }
                 if(comm == NULL)
                 {
@@ -221,7 +221,7 @@ namespace oi
                     catch(std::exception& ex)
                     {
                         oi::exception ox("std", "exception", ex.what());
-                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
+                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception in generating ipc address");
                         throw ox;
                     }
                     catch(...)
@@ -251,7 +251,7 @@ namespace oi
                     catch(std::exception& ex)
                     {
                         oi::exception ox("std", "exception", ex.what());
-                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
+                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception in generating inproc address");
                         throw ox;
                     }
                     catch(...)
@@ -268,12 +268,14 @@ namespace oi
                     boost::function<R(void)>     h_get;
                     boost::function<void(T)>      h_put;
                     boost::function<void(void)>   h_sig;
+                    std::string exception_src("REMOTE");
                     try
                     {
                         _service_info_gaurd.lock_shared();
                         sgn = _service_info.get(ipc_path);
                         _service_info_gaurd.unlock_shared();
 
+                        exception_src += "(" + sgn.module + ":" + sgn.method +")";
                         switch(sgn.type)
                         {
                             case MTH_REQ:
@@ -284,15 +286,17 @@ namespace oi
                                 }
                                 catch(oi::exception &ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE oi::exception ") +  ex.what());
+                                    ex.add_msg(exception_src.c_str(), "oi::exception", "unhandled remote exception");
+                                    r.set_exception(ex.what(), ex.error_code(), exception_type_val::SERVICE);
                                 }
                                 catch(std::exception & ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE std::exception ") +  ex.what());
+                                    oi::exception ox(exception_src.c_str(), "std::exception", ex.what());
+                                    r.set_exception(ox.what(),0,exception_type_val::SERVICE );
                                 }
                                 catch(...)
                                 {
-                                    r.set_exception("unhandled REMOTE unknown exception");
+                                    r.set_exception("unhandled REMOTE unknown exception",0,exception_type_val::SERVICE);
                                 }
                                 break;
                             case MTH_GET:
@@ -303,16 +307,21 @@ namespace oi
                                 }
                                 catch(oi::exception &ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE oi::exception ") +  ex.what());
+                                    ex.add_msg(exception_src.c_str(), "oi::exception", "unhandled REMOTE exception");
+                                    r.set_exception(ex.what(), ex.error_code(), exception_type_val::SERVICE);
                                 }
                                 catch(std::exception & ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE std::exception ") +  ex.what());
+                                    oi::exception ox(exception_src.c_str(), "std::exception", ex.what());
+                                    r.set_exception(ox.what(),0,exception_type_val::SERVICE );
                                 }
                                 catch(...)
                                 {
-                                    r.set_exception("unhandled REMOTE unknown exception");
+                                    r.set_exception("unhandled REMOTE unknown exception",0,exception_type_val::SERVICE);
                                 }
+
+
+
                                 break;
                             case MTH_PUT:
                                 h_put =  boost::any_cast< boost::function<void(T)> >(sgn.handler);
@@ -322,16 +331,19 @@ namespace oi
                                 }
                                 catch(oi::exception &ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE oi::exception ") +  ex.what());
+                                    ex.add_msg(exception_src.c_str(), "oi::exception", "unhandled REMOTE exception");
+                                    r.set_exception(ex.what(), ex.error_code(), exception_type_val::SERVICE);
                                 }
                                 catch(std::exception & ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE std::exception ") +  ex.what());
+                                    oi::exception ox(exception_src.c_str(), "std::exception", ex.what());
+                                    r.set_exception(ox.what(),0,exception_type_val::SERVICE );
                                 }
                                 catch(...)
                                 {
-                                    r.set_exception("unhandled REMOTE unknown exception");
+                                    r.set_exception("unhandled REMOTE unknown exception",0,exception_type_val::SERVICE);
                                 }
+
                                 break;
                             case MTH_SIG:
                                 h_sig =  boost::any_cast< boost::function<void(void)> >(sgn.handler);
@@ -341,19 +353,22 @@ namespace oi
                                 }
                                 catch(oi::exception &ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE oi::exception ") +  ex.what());
+                                    ex.add_msg(exception_src.c_str(), "oi::exception", "unhandled REMOTE exception");
+                                    r.set_exception(ex.what(), ex.error_code(), exception_type_val::SERVICE);
                                 }
                                 catch(std::exception & ex)
                                 {
-                                    r.set_exception(std::string("unhandled REMOTE std::exception ") +  ex.what());
+                                    oi::exception ox(exception_src.c_str(), "std::exception", ex.what());
+                                    r.set_exception(ox.what(),0,exception_type_val::SERVICE );
                                 }
                                 catch(...)
                                 {
-                                    r.set_exception("unhandled REMOTE unknown exception");
+                                    r.set_exception("unhandled REMOTE unknown exception",0,exception_type_val::SERVICE);
                                 }
+
                                 break;
                             default:
-                                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid type for the '") + ipc_path + "' is defined!").c_str());
+                                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid method type `%' for the `%:%' is defined ",sgn.type, sgn.module, sgn.method);
                         };
                     }
                     catch(oi::exception& ex)
@@ -415,14 +430,16 @@ namespace oi
                         _service_stat_list_guard.unlock();
 
 
-                        try
+                        while(_state == READY )
                         {
-                            while(_state == READY )
+                            //recieving a message
+
+                            try
                             {
                                 zmq::message_t req;
                                 T t;
                                 R r;
-                                //recieving a message
+
                                 try
                                 {
                                     sock.recv(&req);
@@ -430,7 +447,15 @@ namespace oi
                                 catch(zmq::error_t & ex)
                                 {
                                     oi::exception ox("zmq", "exception", ex.what());
-                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to receive data from client");
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to receive data from client in `%' (`%',`%')", 
+                                            method_name, typeid(T).name(), typeid(R).name());
+                                    throw ox;
+                                }
+                                catch(std::exception& ex)
+                                {
+                                    oi::exception ox("std", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to receive data from client in `%' (`%',`%')", 
+                                            method_name, typeid(T).name(), typeid(R).name());
                                     throw ox;
                                 }
 
@@ -440,10 +465,10 @@ namespace oi
                                 {
                                     util.to_data_msg<T>(req, t);
                                 }
-                                catch(std::exception& ex)
+                                catch(oi::exception& ex)
                                 {
-                                    oi::exception ox("std", "exception", ex.what());
-                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unable to de-serialize received data from client: ") + typeid(T).name()).c_str());
+                                    oi::exception ox("oi", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to de-serialize received data from client to `%' ",  typeid(T).name());
                                     throw ox;
                                 }
 
@@ -454,15 +479,15 @@ namespace oi
 
                                 auto s3 = std::chrono::system_clock::now();
                                 //serialization of the response
-                                zmq::message_t* rsp;
+                                zmq::message_t* rsp = NULL;
                                 try
                                 {
-                                rsp = util.to_zmq_msg<R>(r);
+                                    rsp = util.to_zmq_msg<R>(r);
                                 }
-                                catch(std::exception& ex)
+                                catch(oi::exception& ex)
                                 {
-                                    oi::exception ox("std", "exception", ex.what());
-                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unable to serialize data to send as response: ") + typeid(R).name()).c_str());
+                                    oi::exception ox("oi", "exception", ex.what());
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to serialize `%' to send as response to the client", typeid(R).name());
                                     throw ox;
                                 }
 
@@ -473,37 +498,42 @@ namespace oi
                                 }
                                 catch(zmq::error_t & ex)
                                 {
+                                    if(rsp != NULL)
+                                    {
+                                        delete rsp;
+                                    }
                                     oi::exception ox("zmq", "exception", ex.what());
-                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to send data to client");
+                                    ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to send response data to client `%(%,%)` ", method_name, typeid(T).name(), typeid(R).name());
                                     throw ox;
                                 }
-                                delete rsp;
-
-                                 total   = s4 - s1;
-                                 srz_req = s2 - s1;
-                                 process = s3 - s2;
-                                 srz_rsp = s4 - s3;
-                                 srv_stat->update(total.count() * 1000000.0,
-                                                                    srz_req.count() * 1000000.0, 
-                                                                    srz_rsp.count() * 1000000.0,
-                                                                    process.count() * 1000000.0,
-                                                                    true);
+                                if(rsp != NULL)
+                                {
+                                    delete rsp;
+                                }
+                                total   = s4 - s1;
+                                srz_req = s2 - s1;
+                                process = s3 - s2;
+                                srz_rsp = s4 - s3;
+                                srv_stat->update(total.count() * 1000000.0,
+                                        srz_req.count() * 1000000.0, 
+                                        srz_rsp.count() * 1000000.0,
+                                        process.count() * 1000000.0,
+                                        true);
                             }
-                        }
-                        catch(oi::exception& ex)
-                        {
-                            ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception");
-                            throw ex;
-                        }
-                        catch(std::exception& ex)
-                        {
-                            oi::exception ox("std", "exception", ex.what());
-                            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
-                            throw ox;
-                        }
-                        catch(...)
-                        {
-                            throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
+                            catch(oi::exception & ox)
+                            {
+                                if(_state == READY )
+                                {
+                                    if(!_exception_handler.empty())
+                                    {
+                                        _exception_handler(ox);
+                                    }
+                                    else
+                                    {
+                                        throw ox;
+                                    }
+                                }
+                            }
                         }
 
                     }
@@ -601,7 +631,7 @@ namespace oi
                         catch(zmq::error_t & ex)
                         {
                             oi::exception ox("std", "exception", ex.what());
-                            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unhandled zmq::exception. unable to bind client router to ") + ipc_addr).c_str());
+                            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled zmq::exception. unable to bind client router to %", ipc_addr);
                             throw ox;
                         }
                         catch(std::exception& ex)
@@ -622,7 +652,7 @@ namespace oi
                         catch(zmq::error_t & ex)
                         {
                             oi::exception ox("std", "exception", ex.what());
-                            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unhandled zmq::exception. unable to bind worker dealer to ") + inproc_addr).c_str());
+                            ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled zmq::exception. unable to bind worker dealer to `%'",  inproc_addr);
                             throw ox;
                         }
                         catch(std::exception& ex)
@@ -747,7 +777,8 @@ namespace oi
                                 }
                                 else
                                 {
-                                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__,("requested service not registered on the server. avalable services are" + srv_inf.to_string()).c_str());
+                                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"requested service (%:%) is not registered on the server. avalable services are %",
+                                                                                      module, method, srv_inf.to_string());
                                 }
                             }
                         }
@@ -834,23 +865,23 @@ namespace oi
                 {
                     if(_state != READY )
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid use of not initilized communicator! call 'initialize()' before any callback registration");
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid use of un-initilized communicator! call 'initialize()' before any callback registration");
                     }
                     if(parallel_degree < 1)
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,(std::string("invalid parallel value: ") + boost::lexical_cast<std::string>(parallel_degree)).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid parallel value: `%'", parallel_degree);
                     }
                     if(method_name.empty())
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,(std::string("invalid method name: ") + method_name).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid method name: `%'", method_name);
                     }
                     if(_name.empty())
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,(std::string("invalid module name: ") + _name).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid module name: `%'", _name);
                     }
                     if(!zmq_msg_util::valid_serializer(srz) )
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,(std::string("invalid serializer: ") + boost::lexical_cast<std::string>(srz)).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"invalid serializer: `%'", srz);
                     }
 
                     try
@@ -1004,14 +1035,14 @@ namespace oi
                 {
                     if(f.empty())
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid callback handler for method") + mth).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth );
                     }
                     try{
                         register_callback_driver<T, dummy_msg>(f, mth, parallel, srz, MTH_PUT);
                     }
                     catch(oi::exception& ex)
                     {
-                        ex.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unhandled oi::exception. unable to register callback for ") + mth).c_str());
+                        ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception. unable to register callback for `%'", mth);
                         throw ex;
                     }
 
@@ -1026,14 +1057,14 @@ namespace oi
                 {
                     if(f.empty())
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid callback handler for method") + mth).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth);
                     }
                     try{
                         register_callback_driver<dummy_msg,R>(f, mth, parallel, srz, MTH_GET);
                     }
                     catch(oi::exception& ex)
                     {
-                        ex.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unhandled oi::exception. unable to register callback for ") + mth).c_str());
+                        ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception. unable to register callback for `%'", mth);
                         throw ex;
                     }
                 }
@@ -1048,7 +1079,7 @@ namespace oi
                 {
                     if(f.empty())
                     {
-                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, (std::string("invalid callback handler for method") + mth).c_str());
+                        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth);
                     }
                     try
                     {
@@ -1056,7 +1087,7 @@ namespace oi
                     }
                     catch(oi::exception& ex)
                     {
-                        ex.add_msg(__FILE__, __PRETTY_FUNCTION__, (std::string("Unhandled oi::exception. unable to register callback for ") + mth).c_str());
+                        ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception. unable to register callback for `%'", mth);
                         throw ex;
                     }
                 }
@@ -1081,7 +1112,9 @@ namespace oi
             }
             if(r.exception_flag())
             {
-                throw oi::exception( _module_name.c_str(), (_method_name+"(Remote)").c_str() , r.exception_msg().c_str());
+                oi::exception ox( ("REMOTE:" + _module_name).c_str(), _method_name.c_str(), r.exception_msg());
+                ox.error_code(r.error_code());
+                throw ox;
             }
         }
     template <class T, class R>
