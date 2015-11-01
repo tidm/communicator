@@ -29,7 +29,7 @@ void get_stat()
 
 void call_core_get_data(int count)
 {
-    oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data", 10,10);
+    oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data", 100,100,40);
 
     for(int j=0 ; j< count; j++)
     {
@@ -38,8 +38,16 @@ void call_core_get_data(int count)
             rsp = m_if_cont.call();
 //          std::cerr << "rsp: " << rsp << std::endl;
         }
-        catch(std::exception & ex)
+        catch(oi::exception & ex)
         {
+            std::cerr << ex.what() << std::endl;
+            std::cerr << "eeror_cocde: " << ex.error_code()<< std::endl;
+          //  std::cerr << ex.what() << std::endl;
+        }
+        catch(std::exception & ex)
+
+        {
+            std::cerr << ex.what() << std::endl;
           //  std::cerr << ex.what() << std::endl;
         }
     }
@@ -70,6 +78,7 @@ int main(int argc, char* argv[])
     int count = atoi(argv[2]);
     int thread_count= atoi(argv[1]);
     cm.initialize("notification");
+
 
     boost::function<void(void)> f_sig = boost::bind( &signal);
     cm.register_callback(f_sig, "signal", 5, oi::SRZ_BOOST);

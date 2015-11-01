@@ -30,8 +30,22 @@ namespace oi
     const serializer SRZ_MSGPACK = 1;
     const serializer SRZ_BOOST = 2;
 
+    namespace exception_type_val
+    {
+        const uint8_t NO_EXCEPT= 0;
+        const uint8_t SERVICE = 1;
+        const uint8_t SRZ_REQ = 2;
+        const uint8_t SRZ_RSP = 3;
+        const uint8_t ZMQ_SEND = 4;
+        const uint8_t ZMQ_RCV = 5;
+    }
     //enum serializer{SRZ_UNKNOWN = 0, SRZ_MSGPACK = 1, SRZ_BOOST = 2};
 
+    namespace zmq_msg_util_error
+    {
+        const int ZMQ =1;
+        const int SRZ= 2;
+    }
     class zmq_msg_util
     {
         private:
@@ -55,56 +69,77 @@ namespace oi
                         {
                             case SRZ_BOOST:
                                 {
-                                    out_archive << t;
+                                    try
+                                    {
+                                        out_archive << t;
+                                    }
+                                    catch(std::exception & ex)
+                                    {
+                                        oi::exception ox("std", "exception", ex.what());
+                                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "unable to serialize type `%' with BOOST", typeid(T).name());
+                                        ox.error_code(zmq_msg_util_error::SRZ);
+                                        throw(ox);
+                                    }
 
-                                    rsp = new zmq::message_t(ss.str().size());
-                                    memcpy((void*)rsp->data(), ss.str().c_str(), ss.str().size());
-                                    //                            out_archive.delete_created_pointers();
+                                    try
+                                    {
+                                        rsp = new zmq::message_t(ss.str().size());
+                                        memcpy((void*)rsp->data(), ss.str().c_str(), ss.str().size());
+                                    }
+                                    catch(std::exception & ex)
+                                    {
+                                        if(rsp != NULL)
+                                        {
+                                            delete rsp;
+                                            rsp = NULL;
+                                        }
+                                        oi::exception ox("zmq", "exception", ex.what());
+                                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "unable to create zmq message for type `%' with the serialized data", typeid(T).name());
+                                        ox.error_code(zmq_msg_util_error::ZMQ);
+                                        throw(ox);
+                                    }
+
+
                                 }
                                 break;
                             case SRZ_MSGPACK:
                                 {
-                                    msgpack::pack(&buffer, t);
-
-                                    rsp = new zmq::message_t(buffer.size());
-                                    memcpy((void*)rsp->data(), buffer.data(), buffer.size());
+                                    try
+                                    {
+                                        msgpack::pack(&buffer, t);
+                                    }
+                                    catch(std::exception & ex)
+                                    {
+                                        oi::exception ox("std", "exception", ex.what());
+                                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "unable to serialize type `%' with MASGPACK", typeid(T).name());
+                                        ox.error_code(zmq_msg_util_error::SRZ);
+                                        throw(ox);
+                                    }
+                                    try
+                                    {
+                                        rsp = new zmq::message_t(buffer.size());
+                                        memcpy((void*)rsp->data(), buffer.data(), buffer.size());
+                                    }
+                                    catch(std::exception & ex)
+                                    {
+                                        if(rsp != NULL)
+                                        {
+                                            delete rsp;
+                                            rsp = NULL;
+                                        }
+                                        oi::exception ox("zmq", "exception", ex.what());
+                                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "unable to create zmq message for type `%' with the serialized data", typeid(T).name());
+                                        ox.error_code(zmq_msg_util_error::ZMQ);
+                                        throw(ox);
+                                    }
                                 }
                                 break;
                             default:
-                                std::stringstream sstr;
-                                sstr << "invalid serialization option " << _tool;
-                                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, sstr.str().c_str() );
+                                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid serialization option % ",  _tool);
                         };
-                    }
-                    catch(zmq::error_t er)
-                    {
-                        if(rsp != NULL)
-                        {
-                            delete rsp;
-                            rsp = NULL;
-                        }
-                        oi::exception oiex("zmq", "exception", er.what());
-                        oiex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled  zmq exception");
-                        throw oiex;
-                    }
-                    catch(std::exception& ex)
-                    {
-                        if(rsp != NULL)
-                        {
-                            delete rsp;
-                            rsp = NULL;
-                        }
-                        oi::exception oiex("std", "exception", ex.what());
-                        oiex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
-                        throw oiex;
                     }
                     catch(...)
                     {
-                        if(rsp != NULL)
-                        {
-                            delete rsp;
-                            rsp = NULL;
-                        }
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
                     }
                     return rsp;
@@ -123,42 +158,47 @@ namespace oi
                             case SRZ_BOOST:
                                 {
                                     data = static_cast<char*>(msg.data());
-                                    boost::iostreams::array_source source(data, msg.size());
-                                    boost::iostreams::stream<boost::iostreams::array_source> stream(source);
-                                    boost::archive::binary_iarchive in_archive(stream);
+                                    try
+                                    {
+                                        boost::iostreams::array_source source(data, msg.size());
+                                        boost::iostreams::stream<boost::iostreams::array_source> stream(source);
+                                        boost::archive::binary_iarchive in_archive(stream);
 
-                                    in_archive >> t;
+                                        in_archive >> t;
+                                    }
+                                    catch(std::exception & ex)
+                                    {
+                                        oi::exception ox("std", "exception", ex.what());
+                                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "unable to deserialize type `%' with BOOST", typeid(T).name());
+                                        ox.error_code(zmq_msg_util_error::SRZ);
+                                        throw(ox);
+                                    }
 
-                                    //                           in_archive.delete_created_pointers();
                                 }
                                 break;
                             case SRZ_MSGPACK:
 
                                 {
-                                    msgpack::unpack(&result,(char*)(msg.data()), msg.size());
+                                    try
+                                    {
+                                        msgpack::unpack(&result,(char*)(msg.data()), msg.size());
 
-                                    msgpack::object obj = result.get();
-                                    t = obj.as<T>();
+                                        msgpack::object obj = result.get();
+                                        t = obj.as<T>();
+                                    }
+                                    catch(std::exception & ex)
+                                    {
+                                        oi::exception ox("std", "exception", ex.what());
+                                        ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "unable to deserialize type `%' with MSGPACK", typeid(T).name());
+                                        ox.error_code(zmq_msg_util_error::SRZ);
+                                        throw(ox);
+                                    }
+
                                 }
                                 break;
                             default:
-                                std::stringstream sstr;
-                                sstr << "invalid serialization option " << _tool;
-                                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, sstr.str().c_str() );
+                                throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid serialization option `%' " ,  _tool);
                         };
-                    }
-
-                    catch(zmq::error_t er)
-                    {
-                        oi::exception oiex("zmq", "exception", er.what());
-                        oiex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled  zmq exception");
-                        throw oiex;
-                    }
-                    catch(std::exception& ex)
-                    {
-                        oi::exception oiex("std", "exception", ex.what());
-                        oiex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
-                        throw oiex;
                     }
                     catch(...)
                     {
