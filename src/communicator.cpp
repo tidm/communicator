@@ -51,7 +51,7 @@ namespace oi
         }
         if(sw == false)
         {
-            request<dummy_msg, service_info>(module, SERVICE_INFO_METHOD_NAME , d, srv, CHANNEL_SOCKET_SEND_TIMEOUT, CHANNEL_SOCKET_RECV_TIMEOUT);
+            request<dummy_msg, service_info>(module, SERVICE_INFO_METHOD_NAME , d, srv, CHANNEL_SOCKET_SEND_TIMEOUT, CHANNEL_SOCKET_RECV_TIMEOUT, 1);
             _dst_setvice_list_gaurd.lock();
             {
                 _dst_service_list[module] = srv; 
@@ -324,14 +324,15 @@ namespace oi
     sig_interface communicator::create_sig_interface(const std::string &module,
             const std::string &method, 
             int snd_timeout , 
-            int rcv_timeout 
+            int rcv_timeout ,
+            int thread_count
 
             )throw (oi::exception)
     {
         sig_interface f;
         try
         {
-            f.initialize(module, method, this, snd_timeout, rcv_timeout);
+            f.initialize(module, method, this, snd_timeout, rcv_timeout, thread_count);
         }
         catch(oi::exception& ex)
         {

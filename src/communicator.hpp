@@ -35,6 +35,7 @@ namespace oi
             bool _is_init;
 
             protected:
+            int  _thread_count;
             int _rcv_timeout;
             int _snd_timeout;
             virtual void call(T t, R& r)throw (oi::exception);
@@ -42,7 +43,8 @@ namespace oi
                     const std::string &methodname,
                     communicator * comm, 
                     int snd_timeout, 
-                    int rcv_timeout
+                    int rcv_timeout,
+                    int thread_count
 
                     )throw(oi::exception)
             {
@@ -58,10 +60,15 @@ namespace oi
                 {
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid communicator reference! NULL pointer exception! ");
                 }
+                if(thread_count < 1 || thread_count > 200)
+                {
+                    throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid no of threads `%'! ", thread_count);
+                }
                 _method_name = methodname;
                 _module_name = modulename;
                 _snd_timeout = snd_timeout;
                 _rcv_timeout = rcv_timeout;
+                _thread_count = thread_count;
                 _comm       = comm;
                 _is_init = true;
             }
@@ -104,9 +111,10 @@ namespace oi
                     const std::string &methodname,
                     communicator * comm,
                     int snd_timeout,
-                    int rcv_timeout) throw(oi::exception)
+                    int rcv_timeout,
+                    int thread_count) throw(oi::exception)
             {
-                method_interface<T,R>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
+                method_interface<T,R>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout, thread_count);
             }
         public:
             req_interface():method_interface<T,R>(){}
@@ -121,9 +129,10 @@ namespace oi
                     const std::string &methodname,
                     communicator * comm,
                     int snd_timeout,
-                    int rcv_timeout) throw (oi::exception)
+                    int rcv_timeout,
+                    int thread_count) throw (oi::exception)
             {
-                    method_interface<T,dummy_msg>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
+                    method_interface<T,dummy_msg>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout, thread_count);
             }
         public:
             put_interface():method_interface<T, dummy_msg>(){}
@@ -139,9 +148,10 @@ namespace oi
                     const std::string &methodname,
                     communicator * comm,
                     int snd_timeout,
-                    int rcv_timeout)throw(oi::exception)
+                    int rcv_timeout,
+                    int thread_count)throw(oi::exception)
             {
-                    method_interface<dummy_msg, T>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
+                    method_interface<dummy_msg, T>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout, thread_count);
             }
         public:
             get_interface():method_interface<dummy_msg, T>(){}
@@ -155,9 +165,10 @@ namespace oi
                     const std::string &methodname,
                     communicator * comm,
                     int snd_timeout,
-                    int rcv_timeout)throw(std::exception)
+                    int rcv_timeout,
+                    int thread_count)throw(std::exception)
             {
-                 method_interface<dummy_msg, dummy_msg>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout);
+                 method_interface<dummy_msg, dummy_msg>::initialize(modulename, methodname, comm, snd_timeout, rcv_timeout, thread_count);
             }
         public:
             sig_interface():method_interface<dummy_msg, dummy_msg>(){}
@@ -745,7 +756,7 @@ namespace oi
             service_info get_service_list(const std::string& module, bool use_cache = true);
 
             template<typename T, typename R>
-                double request(const std::string &module, const std::string& method, T& t, R& r, int snd_timeout, int rcv_timeout )throw(oi::exception)
+                double request(const std::string &module, const std::string& method, T& t, R& r, int snd_timeout, int rcv_timeout, int thread_count )throw(oi::exception)
                 {
                     timespec t_s, t_e;
                     std::string ipc_str;
@@ -812,7 +823,7 @@ namespace oi
                         {
 
                             chnl = new channel<T,R>(module, method, ipc_str, &_context, srz, snd_timeout, rcv_timeout);
-                            chnl->init();
+                            chnl->init(thread_count);
                             _channel_map[ipc_str] = chnl;
                         }
                         else
@@ -955,7 +966,8 @@ namespace oi
             sig_interface create_sig_interface(const std::string &module,
                     const std::string &method, 
                     int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
-                    int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
+                    int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT,
+                    int thread_count = 1
                     )throw (oi::exception);
 
             void register_callback(boost::function<void(void)> f,
@@ -968,13 +980,14 @@ namespace oi
                 req_interface<T,R> create_req_interface(const std::string &module, 
                         const std::string &method , 
                         int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
-                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
+                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT,
+                        int thread_count = 1
                         )throw(oi::exception)
                 {
                     req_interface<T,R> f;
                     try
                     {
-                        f.initialize(module, method, this, snd_timeout, rcv_timeout);
+                        f.initialize(module, method, this, snd_timeout, rcv_timeout, thread_count);
                     }
                     catch(oi::exception& ex)
                     {
@@ -988,14 +1001,14 @@ namespace oi
                 put_interface<T> create_put_interface(const std::string &module,
                         const std::string &method, 
                         int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
-                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
-
+                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT,
+                        int thread_count = 1
                         )throw(oi::exception)
                 {
                     put_interface<T> f;
                     try
                     {
-                        f.initialize(module, method, this, snd_timeout, rcv_timeout);
+                        f.initialize(module, method, this, snd_timeout, rcv_timeout, thread_count);
                     }
                     catch(oi::exception& ex)
                     {
@@ -1009,14 +1022,15 @@ namespace oi
                 get_interface<T> create_get_interface(const std::string &module,
                         const std::string &method, 
                         int snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT, 
-                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT
+                        int rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT,
+                        int thread_count = 1
 
                         )throw(oi::exception)
                 {
                     get_interface<T> f;
                     try
                     {
-                        f.initialize(module, method, this, snd_timeout, rcv_timeout);
+                        f.initialize(module, method, this, snd_timeout, rcv_timeout, thread_count);
                     }
                     catch(oi::exception& ex)
                     {
@@ -1103,7 +1117,7 @@ namespace oi
 
             try
             {
-                _comm->request(_module_name, _method_name, t, r, _snd_timeout, _rcv_timeout);
+                _comm->request(_module_name, _method_name, t, r, _snd_timeout, _rcv_timeout, _thread_count);
             }
             catch(oi::exception& ex)
             {

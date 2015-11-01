@@ -3,7 +3,8 @@
 //#define BOOST_ALL_DYN_LINK
 //#define DSO
 #include"zmq.hpp"
-#include<boost/interprocess/sync/interprocess_semaphore.hpp>
+//#include<boost/interprocess/sync/interprocess_semaphore.hpp>
+#include<semaphore.hpp>
 #include<boost/asio.hpp>
 #include<boost/thread/mutex.hpp>
 #include<boost/thread/thread.hpp>
@@ -12,6 +13,7 @@
 #include<map>
 #include "channel_base.hpp"
 #include <chrono>
+#include <thread>
 namespace oi
 {
     const int CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE = 200;
@@ -53,9 +55,9 @@ namespace oi
         class channel:public channel_base
     {
         private:
-            boost::interprocess::interprocess_semaphore* _sem;
+            oi::semaphore* _sem;
             boost::mutex _mutex;
-            boost::thread* _thread;
+            std::vector<boost::thread*> _threads;
             std::queue<msg_container<T,R>*> _que;
             serializer _srz_tool;
 
@@ -88,7 +90,11 @@ namespace oi
                     {
                         zmq::message_t* req = NULL;
 
-                        _sem->wait();
+                        bool wait_res = false;
+                        while(_is_alive== true && wait_res == false)
+                        {
+                            wait_res = _sem->wait_for(100); //wait_res equal to false means timeout  . 100ms
+                        }
 
                         if(!_is_alive)
                             break;
@@ -262,7 +268,6 @@ namespace oi
             _ipc_path = ipc;
             _context = cntx;
             _sem = NULL;
-            _thread = NULL;
             _srz_tool = srz;
             _snd_timeout = snd_timeout;
             _rcv_timeout = rcv_timeout;
@@ -275,17 +280,23 @@ namespace oi
                 {
                     close();
                 }
-                if(_thread != NULL)
-                    delete _thread;
+                for(auto & th:_threads)
+                {
+                    if(th != NULL)
+                        delete  th;
+                }
                 if(_sem != NULL)
                     delete _sem;
             }
-            void init()throw (oi::exception)
+            void init(int thread_count)throw (oi::exception)
             {
                 _is_alive = true;
                 try{
-                    _sem = new boost::interprocess::interprocess_semaphore(0);
-                    _thread  =new boost::thread(boost::bind(&channel::process_thread_function, this));
+                    _sem = new oi::semaphore(0);
+                    for(int i=0; i< thread_count; i++)
+                    {
+                        _threads.push_back(new boost::thread(boost::bind(&channel::process_thread_function, this)));
+                    }
                 }
                 catch(std::exception& ex)
                 {
@@ -313,7 +324,7 @@ namespace oi
                     _que.push(&msgc);
                     _mutex.unlock();
 
-                    _sem->post();
+                    _sem->notify();
 
                     msgc.wait();
                 }
@@ -335,8 +346,10 @@ namespace oi
                     if(_is_alive == true)
                     {
                         _is_alive = false;
-                        _sem->post();
-                        _thread->join();
+                        for(auto & th: _threads)
+                        {
+                            th->join();
+                        }
                     }
                 }
                 catch(...)

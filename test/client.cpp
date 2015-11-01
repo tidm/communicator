@@ -29,7 +29,7 @@ void get_stat()
 
 void call_core_get_data(int count)
 {
-    oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data", 10,10);
+    oi::get_interface<oi::container > m_if_cont = cm.create_get_interface<oi::container >("core", "get_data", 100,100,40);
 
     for(int j=0 ; j< count; j++)
     {

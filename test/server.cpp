@@ -14,56 +14,56 @@ T get_int()
     template<typename T>
 T get_data()
 {
-    try
-    {
-        try
-        {
-            try
-            {
-                try
-                {
-                    try
-                    {
-
-                        oi::exception ox("std", "exception", "1");
-                        ox.error_code(34);
-                        throw ox;
-
-                    }
-                    catch(oi::exception & ox)
-                    {
-                        ox.add_msg(__FILE__, __FUNCTION__, "2");
-                        throw ox;
-                    }
-
-                }
-                catch(oi::exception & ox)
-                {
-                    ox.add_msg(__FILE__, __FUNCTION__, "3");
-                    throw ox;
-                }
-
-            }
-            catch(oi::exception & ox)
-            {
-                ox.add_msg(__FILE__, __FUNCTION__, "4");
-                throw ox;
-            }
-
-        }
-        catch(oi::exception & ox)
-        {
-            ox.add_msg(__FILE__, __FUNCTION__, "5");
-            throw ox;
-        }
-
-    }
-    catch(oi::exception & ox)
-    {
-        ox.add_msg(__FILE__, __FUNCTION__, "6");
-        throw ox;
-    }
-    usleep(5000);
+//    try
+//    {
+//        try
+//        {
+//            try
+//            {
+//                try
+//                {
+//                    try
+//                    {
+//
+//                        oi::exception ox("std", "exception", "1");
+//                        ox.error_code(34);
+//                        throw ox;
+//
+//                    }
+//                    catch(oi::exception & ox)
+//                    {
+//                        ox.add_msg(__FILE__, __FUNCTION__, "2");
+//                        throw ox;
+//                    }
+//
+//                }
+//                catch(oi::exception & ox)
+//                {
+//                    ox.add_msg(__FILE__, __FUNCTION__, "3");
+//                    throw ox;
+//                }
+//
+//            }
+//            catch(oi::exception & ox)
+//            {
+//                ox.add_msg(__FILE__, __FUNCTION__, "4");
+//                throw ox;
+//            }
+//
+//        }
+//        catch(oi::exception & ox)
+//        {
+//            ox.add_msg(__FILE__, __FUNCTION__, "5");
+//            throw ox;
+//        }
+//
+//    }
+//    catch(oi::exception & ox)
+//    {
+//        ox.add_msg(__FILE__, __FUNCTION__, "6");
+//        throw ox;
+//    }
+    usleep(4000);
     oi::container ct;
     ii++;
     ct.id = ii;
