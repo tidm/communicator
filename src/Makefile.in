@@ -319,7 +319,6 @@ liboi_communicator_la_SOURCES = \
 
 liboi_communicator_la_LDFLAGS = -version-info $(OI_COMMUNICATOR_SO_VERSION)
 liboi_communicator_la_LIBADD = \
-    -lmsgpack \
 	$(OI_EXCEPTION_LIBS) \
 	$(OI_COMMON_LIBS) \
     $(ZMQ_LIBS) \
