@@ -83,8 +83,9 @@ namespace oi
 
                                     try
                                     {
-                                        rsp = new zmq::message_t(ss.str().size());
-                                        memcpy((void*)rsp->data(), ss.str().c_str(), ss.str().size());
+                                        std::string s = ss.str();
+                                        rsp = new zmq::message_t(s.size());
+                                        memcpy((void*)rsp->data(), s.c_str(), s.size());
                                     }
                                     catch(std::exception & ex)
                                     {
