@@ -179,9 +179,13 @@ namespace oi
             usleep(200000);
         }
     }
-    bool communicator::is_remote_ready(const std::string & remote_module, const std::string & method_name)throw()
+    bool communicator::is_remote_ready(const std::string & remote_module, const std::string & method_name)throw(oi::exception)
     {
         bool is_ready = false;
+        if(_state != communicator::state::READY)
+        {
+            throw oi::exception(__FILE__, __FUNCTION__, "invalid use of `%' communicator object", _state);
+        }
 
         service_info srv; 
         try{
@@ -371,3 +375,25 @@ namespace oi
 
 
 }
+    std::ostream& oi::operator<< (std::ostream& os, const oi::communicator::state & s)
+    {
+       switch(s)
+       {
+           case oi::communicator::NEW: 
+               os << "NEW(not initialized)"; 
+               break;
+
+           case oi::communicator::READY: 
+               os << "READY"; 
+               break;
+
+           case oi::communicator::SIGNALED: 
+               os << "SIGNALED(shutdown)"; 
+               break;
+
+           case oi::communicator::TERMINATED: 
+               os << "TERMINATED(finalized)"; 
+               break;
+       };
+       return os;
+    }

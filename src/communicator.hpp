@@ -956,7 +956,7 @@ namespace oi
             communicator()throw();
             void initialize(const std::string &me, const boost::function<void(const oi::exception&)> & exception_handler = NULL)throw(oi::exception);
             void wait()throw(oi::exception);
-            bool is_remote_ready(const std::string& module, const std::string& method)throw();
+            bool is_remote_ready(const std::string& module, const std::string& method)throw(oi::exception);
             std::map<std::string, cm_stat> get_channel_stat()throw(oi::exception);
             std::map<std::string, cm_info> get_service_stat()throw(oi::exception);
             std::map<std::string, cm_info> get_interface_stat()throw(oi::exception);
@@ -1106,6 +1106,8 @@ namespace oi
                     }
                 }
     };
+
+    std::ostream& operator<< (std::ostream& os, const oi::communicator::state & s);
 
     template <class T, class R>
         void method_interface<T, R>::call(T t, R& r) throw(oi::exception)
