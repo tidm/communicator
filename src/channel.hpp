@@ -3,17 +3,15 @@
 //#define BOOST_ALL_DYN_LINK
 //#define DSO
 #include"zmq.hpp"
-//#include<boost/interprocess/sync/interprocess_semaphore.hpp>
-#include<semaphore.hpp>
-#include<boost/asio.hpp>
-#include<boost/thread/mutex.hpp>
-#include<boost/thread/thread.hpp>
-#include<boost/function.hpp>
-#include<queue>
-#include<map>
 #include "channel_base.hpp"
+#include <semaphore.hpp>
+#include <queue>
+#include <map>
 #include <chrono>
 #include <thread>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
 namespace oi
 {
     const int CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE = 200;
@@ -21,9 +19,9 @@ namespace oi
         class msg_container
         {
             private:
-                boost::mutex _mutex;
+                std::mutex _mutex;
                 bool _is_done;
-                boost::condition_variable _cond_var;
+                std::condition_variable _cond_var;
             public:
                 T* req;
                 R* rsp;
@@ -36,14 +34,12 @@ namespace oi
 
                 void wait()
                 {
-                    boost::mutex::scoped_lock lock(_mutex);
-                    while (!_is_done)
-                    {
-                        _cond_var.wait(lock);
-                    }
+                    std::unique_lock<std::mutex> lk(_mutex);
+                    _cond_var.wait(lk, [this]{return this->_is_done;});
                 }
                 void done()
                 {
+                     std::lock_guard<std::mutex> lk(_mutex);
                     _is_done = true;
                     _cond_var.notify_one();
                 }
@@ -56,8 +52,8 @@ namespace oi
     {
         private:
             oi::semaphore* _sem;
-            boost::mutex _mutex;
-            std::vector<boost::thread*> _threads;
+            std::mutex _mutex;
+            std::vector<std::thread> _threads;
             std::queue<msg_container<T,R>*> _que;
             serializer _srz_tool;
 
@@ -100,12 +96,11 @@ namespace oi
                             break;
                         
                         msg_container<T,R> *msg = NULL;
-                        _mutex.lock();
                         {
+                            std::lock_guard<std::mutex> lk(_mutex);
                             msg = _que.front();
                             _que.pop();
                         }
-                        _mutex.unlock();
 
                         clock_gettime(CLOCK_REALTIME, &t1);//SHOULD BE REMOVED IF only get_ch_stat is used
 
@@ -280,11 +275,7 @@ namespace oi
                 {
                     close();
                 }
-                for(auto & th:_threads)
-                {
-                    if(th != NULL)
-                        delete  th;
-                }
+                //TODO joining ....
                 if(_sem != NULL)
                     delete _sem;
             }
@@ -295,7 +286,7 @@ namespace oi
                     _sem = new oi::semaphore(0);
                     for(int i=0; i< thread_count; i++)
                     {
-                        _threads.push_back(new boost::thread(boost::bind(&channel::process_thread_function, this)));
+                        _threads.emplace_back(std::bind(&channel::process_thread_function, this));
                     }
                 }
                 catch(std::exception& ex)
@@ -320,10 +311,10 @@ namespace oi
                 {
                     msg_container<T, R> msgc(static_cast<T*>(t),static_cast<R*>(r));
 
-                    _mutex.lock();
-                    _que.push(&msgc);
-                    _mutex.unlock();
-
+                    {
+                        std::lock_guard<std::mutex> lk(_mutex);
+                        _que.push(&msgc);
+                    }
                     _sem->notify();
 
                     msgc.wait();
@@ -348,7 +339,7 @@ namespace oi
                         _is_alive = false;
                         for(auto & th: _threads)
                         {
-                            th->join();
+                            th.join();
                         }
                     }
                 }

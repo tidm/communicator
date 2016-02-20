@@ -4,13 +4,15 @@
 #include"com_type.hpp"
 #include"cm_stat.hpp"
 #include"service_stubs.hpp"
+#include <boost/thread.hpp>
 #include <chrono>
 #include<common.hpp>
 #include<typeinfo>
 #include<vector>
 #include<time.h>
 #include<memory>
-#include<boost/lexical_cast.hpp>
+
+#include<tracer.hpp>
 
 #define ZMQ_CONTEXT_IO_THREADS 10
 
@@ -19,7 +21,7 @@ namespace oi
     const int SOCKET_TIMEOUT_VALUE = 200;
     const int CHANNEL_SOCKET_RECV_TIMEOUT = 1000;
     const int CHANNEL_SOCKET_SEND_TIMEOUT = 200;
-    enum oi_err {OI_SUCCESS, OI_ERROR};
+//    enum oi_err {OI_SUCCESS, OI_ERROR};
 
     class communicator;
 
@@ -184,16 +186,17 @@ namespace oi
                 friend class method_interface;
             enum state{NEW, READY, SIGNALED, TERMINATED};
         private:
+//oi::tracer _tracer;
             
             std::vector<boost::thread*> _worker_thread_list;
             std::vector<boost::thread*> _proxy_thread_list;
             zmq::context_t _context;
             std::vector<zmq::socket_t*>  _clients;
             std::vector<zmq::socket_t*>  _workers;
-            boost::mutex _proxy_thread_mutex;
+            std::mutex _proxy_thread_mutex;
             std::string  _name;
             std::map<std::string, channel_base*> _channel_map;
-            boost::mutex _channel_map_mutex;
+            std::mutex _channel_map_mutex;
             std::string _ipc_file_path;
 
             volatile state _state;
@@ -205,7 +208,7 @@ namespace oi
             boost::shared_mutex _dst_setvice_list_gaurd;
 
             std::map<std::string, transmission_stat*> _service_stat_list;
-            boost::mutex _service_stat_list_guard;
+            std::mutex _service_stat_list_guard;
 
             boost::function<void(const oi::exception&)> _exception_handler;
 
@@ -225,7 +228,7 @@ namespace oi
                                 method + "_" +
                                 std::string(typeid(T).name()) + "_" +
                                 std::string(typeid(R).name()) + "_" +
-                                boost::lexical_cast<std::string>(static_cast<int>(srz))) +
+                                std::to_string(static_cast<int>(srz))) +
                                 ".ipc"
                                 );
                     }
@@ -255,7 +258,7 @@ namespace oi
                                 method + "_" +
                                 std::string(typeid(T).name()) + "_" +
                                 std::string(typeid(R).name()) + "_" +
-                                boost::lexical_cast<std::string>(static_cast<int>(srz)) + 
+                                std::to_string(static_cast<int>(srz)) + 
                                 ".inprc"
                                 );
                     }
@@ -411,7 +414,8 @@ namespace oi
                         zmq::socket_t sock(_context, ZMQ_REP);
                         sock.setsockopt(ZMQ_LINGER, &SOCKET_TIMEOUT_VALUE, sizeof(SOCKET_TIMEOUT_VALUE));
                         try{
-                            sock.connect( generate_inproc_addr<T,R>(_name, method_name, srz).c_str());
+                            std::string str = generate_inproc_addr<T,R>(_name, method_name, srz);
+                            sock.connect( str.c_str());
                         }
                         catch(zmq::error_t & ex)
                         {
@@ -436,9 +440,10 @@ namespace oi
                         std::chrono::duration<double> process;
                         std::chrono::duration<double> srz_rsp;
                         transmission_stat * srv_stat;
-                        _service_stat_list_guard.lock();
+                        {
+                            std::lock_guard<std::mutex> m(_service_stat_list_guard);
                             srv_stat = _service_stat_list[ipc_addr];
-                        _service_stat_list_guard.unlock();
+                        }
 
 
                         while(_state == READY )
@@ -680,10 +685,11 @@ namespace oi
 
                         try{
 
-                            lock();
-                            _clients.push_back(client);
-                            _workers.push_back(worker);
-                            unlock();
+                            {
+                                std::lock_guard<std::mutex> m(_proxy_thread_mutex);
+                                _clients.push_back(client);
+                                _workers.push_back(worker);
+                            }
 
                             //_is_run = true;
                             boost::thread* th;
@@ -698,9 +704,10 @@ namespace oi
                                             method_name
                                             )
                                         );
-                                lock();
-                                _worker_thread_list.push_back(th);
-                                unlock();
+                                {
+                                    std::lock_guard<std::mutex> m(_proxy_thread_mutex);
+                                    _worker_thread_list.push_back(th);
+                                }
                             }
                             zmq::proxy(*client, *worker, NULL);
                         }
@@ -751,18 +758,20 @@ namespace oi
                     catch(...)
                     {}
                 }
-            void lock();
-            void unlock();
             service_info get_service_list(const std::string& module, bool use_cache = true);
-
+//uint64_t get_trace_no();
+//std::mutex _trace_no_lock;
+//uint64_t _trace_no;
             template<typename T, typename R>
                 double request(const std::string &module, const std::string& method, T& t, R& r, int snd_timeout, int rcv_timeout, int thread_count )throw(oi::exception)
                 {
+
                     timespec t_s, t_e;
                     std::string ipc_str;
                     serializer srz = SRZ_UNKNOWN;
                     channel<T,R>* chnl  = NULL;
-
+//uint64_t trace_no = get_trace_no();
+//_tracer.update(trace_no, __LINE__);
                     clock_gettime(CLOCK_REALTIME, &t_s);
                     try
                     {
@@ -773,6 +782,7 @@ namespace oi
 
                         if(ipc_str_mspack != ipc_str_get_service_info)
                         {
+//_tracer.update(trace_no, __LINE__);
                             service_info srv_inf = get_service_list(module);
                             if(srv_inf.has_service(ipc_str_mspack))
                             {
@@ -788,6 +798,7 @@ namespace oi
                                 }
                                 else
                                 {
+//_tracer.update(trace_no, __LINE__);
                                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"requested service (%:%) is not registered on the server. avalable services are %",
                                                                                       module, method, srv_inf.to_string());
                                 }
@@ -814,11 +825,13 @@ namespace oi
                     {
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
                     }
+//_tracer.update(trace_no, __LINE__);
 
 
-                    _channel_map_mutex.lock();
                     try
                     {
+//_tracer.update(trace_no, __LINE__);
+                        std::lock_guard<std::mutex> m{_channel_map_mutex};
                         if(_channel_map.find(ipc_str) == _channel_map.end())
                         {
 
@@ -830,30 +843,28 @@ namespace oi
                         {
                             chnl = static_cast<channel<T,R>*>(_channel_map[ipc_str]);
                         }
+//_tracer.update(trace_no, __LINE__);
                     }
                     catch(oi::exception& ex)
                     {
                         ex.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled oi::exception");
-                        _channel_map_mutex.unlock();
                         throw ex;
                     }
                     catch(std::exception& ex)
                     {
                         oi::exception ox("std", "exception", ex.what());
                         ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unhandled std::exception");
-                        _channel_map_mutex.unlock();
                         throw ox;
                     }
                     catch(...)
                     {
-                        _channel_map_mutex.unlock();
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
                     }
 
-                    _channel_map_mutex.unlock();
 
                     try
                     {
+//_tracer.update(trace_no, __LINE__);
                         chnl->process(static_cast<void*>(&t),static_cast<void*>(&r));
                     }
                     catch(oi::exception& ex)
@@ -863,6 +874,7 @@ namespace oi
                     }
 
                     clock_gettime(CLOCK_REALTIME, &t_e);
+//_tracer.del(trace_no);
                     return (t_e.tv_sec - t_s.tv_sec) * 1000000 + (t_e.tv_nsec - t_s.tv_nsec) / 1000.0;
                 }
 
@@ -898,10 +910,10 @@ namespace oi
                     try
                     {
                         std::string ipc_path = generate_ipc_addr<T,R>(_name, method_name, srz);
-
-                        _service_stat_list_guard.lock();
-                        _service_stat_list[ipc_path] = new transmission_stat();
-                        _service_stat_list_guard.unlock();
+                        {
+                            std::lock_guard<std::mutex> m(_service_stat_list_guard);
+                            _service_stat_list[ipc_path] = new transmission_stat();
+                        }
 
 
                         _service_info_gaurd.lock();

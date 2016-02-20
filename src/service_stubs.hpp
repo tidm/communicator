@@ -13,8 +13,6 @@ namespace oi
     const method_type MTH_PUT = 3;
     const method_type MTH_SIG = 4;
     
-    //enum method_type{MTH_UNKNOWN = 0, MTH_REQ = 1, MTH_GET = 2, MTH_PUT = 3, MTH_SIG =4};
-
     class service_sign
     {
         public:
@@ -26,7 +24,6 @@ namespace oi
             serializer  srz;
             std::string ipc_path;
             boost::any  handler;
-            //MSGPACK_DEFINE(module, method, (int&)type, req, rsp, (int&)srz, ipc_path)
             MSGPACK_DEFINE(module, method, type, req, rsp, srz, ipc_path)
             service_sign();
             std::string to_string()throw(oi::exception);
@@ -60,5 +57,7 @@ namespace oi
                     boost::any handler)throw (oi::exception);
             std::string to_string()throw(oi::exception);
     };
+    std::ostream& operator<<(std::ostream& os, const service_info& srv);
+    std::ostream& operator<<(std::ostream& os, const service_sign & m);
 }
 #endif
