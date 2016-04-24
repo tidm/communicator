@@ -9,7 +9,6 @@
 #include<boost/serialization/set.hpp>
 #include<boost/serialization/string.hpp>
 #include<boost/serialization/vector.hpp>
-#include<boost/function.hpp>
 #include<boost/archive/binary_oarchive.hpp>
 #include<boost/archive/binary_iarchive.hpp>
 #include<boost/iostreams/device/array.hpp>

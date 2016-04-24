@@ -1,15 +1,15 @@
 #include"communicator.hpp"
 #include "container.hpp"
 #include <thread>
-void signal()
+void mysignal()
 {
     std::cerr << "signalled " << std::endl;
 }
-void shutdown(oi::communicator * cm)
-{
-    cm->shutdown();
-}
 oi::communicator cm;
+void shutdown1()
+{
+    cm.shutdown();
+}
 bool is_done;
 void get_stat()
 {
@@ -80,11 +80,11 @@ int main(int argc, char* argv[])
     cm.initialize("notification");
 
 
-    boost::function<void(void)> f_sig = boost::bind( &signal);
+    std::function<void()> f_sig = mysignal;
     cm.register_callback(f_sig, "signal", 5, oi::SRZ_BOOST);
     
-    boost::function<void(void)> f = boost::bind(&shutdown, &cm);
-    cm.register_callback(f, "shutdown",1,oi::SRZ_MSGPACK);
+    std::function<void()> f1 = shutdown1;
+    cm.register_callback(f1, "shutdown",1,oi::SRZ_MSGPACK);
 
     oi::get_interface<oi::com_type<int> > m_if;
     m_if = cm.create_get_interface<oi::com_type<int> >("core", "get_int", 10, 10);
