@@ -689,11 +689,6 @@ namespace oi
                                 std::lock_guard<std::mutex> m(_proxy_thread_mutex);
                                 _clients.push_back(client);
                                 _workers.push_back(worker);
-                            }
-
-                            //_is_run = true;
-                            std::lock_guard<std::mutex> m(_proxy_thread_mutex);
-                            {
                                 for(int i=0; i< parallel_degree; i++)
                                 {
                                     _worker_thread_list.emplace_back( std::bind( &communicator::worker_thread_function<T,R>, this, ipc_addr, srz, method_name ) );

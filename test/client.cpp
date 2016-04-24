@@ -36,7 +36,7 @@ void call_core_get_data(int count)
         oi::container rsp;
         try{
             rsp = m_if_cont.call();
-//          std::cerr << "rsp: " << rsp << std::endl;
+          std::cerr << "rsp: " << rsp << std::endl;
         }
         catch(oi::exception & ex)
         {
@@ -93,15 +93,15 @@ int main(int argc, char* argv[])
     m_if_kill = cm.create_sig_interface("core", "shutdown");
 
     std::thread th(get_stat);
-    std::vector<std::thread*> thread_list;
+    std::vector<std::thread> thread_list;
     for(int i=0; i< thread_count; i++)
     {
-        thread_list.push_back(new std::thread(call_core_get_data, count));
+        thread_list.emplace_back(call_core_get_data, count);
     }
 
     for(int i=0; i< thread_count; i++)
     {
-        thread_list[i]->join();
+        thread_list[i].join();
     }
     is_done = true;
     th.join();
