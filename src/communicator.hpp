@@ -58,7 +58,7 @@ namespace oi
                 {
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid method name `%'", _module_name);
                 }
-                if(comm == NULL)
+                if(comm == nullptr)
                 {
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid communicator reference! NULL pointer exception! ");
                 }
@@ -76,7 +76,7 @@ namespace oi
             }
             method_interface()
             {
-                _comm = NULL;
+                _comm = nullptr;
                 _is_init = false;
                 _rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT;
                 _snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT;
@@ -495,7 +495,7 @@ namespace oi
 
                                 auto s3 = std::chrono::system_clock::now();
                                 //serialization of the response
-                                zmq::message_t* rsp = NULL;
+                                zmq::message_t* rsp = nullptr;
                                 try
                                 {
                                     rsp = util.to_zmq_msg<R>(r);
@@ -514,7 +514,7 @@ namespace oi
                                 }
                                 catch(zmq::error_t & ex)
                                 {
-                                    if(rsp != NULL)
+                                    if(rsp != nullptr)
                                     {
                                         delete rsp;
                                     }
@@ -522,7 +522,7 @@ namespace oi
                                     ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to send response data to client `%(%,%)` ", method_name, typeid(T).name(), typeid(R).name());
                                     throw ox;
                                 }
-                                if(rsp != NULL)
+                                if(rsp != nullptr)
                                 {
                                     delete rsp;
                                 }
@@ -577,8 +577,8 @@ namespace oi
                 {
                     std::string ipc_addr;
                     std::string inproc_addr;
-                    zmq::socket_t * client = NULL;
-                    zmq::socket_t * worker=  NULL;
+                    zmq::socket_t * client = nullptr;
+                    zmq::socket_t * worker=  nullptr;
                     try{
 
                         try
@@ -694,7 +694,7 @@ namespace oi
                                     _worker_thread_list.emplace_back( std::bind( &communicator::worker_thread_function<T,R>, this, ipc_addr, srz, method_name ) );
                                 }
                             }
-                            zmq::proxy(*client, *worker, NULL);
+                            zmq::proxy(*client, *worker, nullptr);
                         }
                         catch(zmq::error_t & ex)
                         {
@@ -729,12 +729,12 @@ namespace oi
 
                     try
                     {
-                        if(client != NULL)
+                        if(client != nullptr)
                         {
                             client->close();
                             delete client;
                         }
-                        if(worker !=  NULL)
+                        if(worker !=  nullptr)
                         {
                             worker->close();
                             delete worker;
@@ -754,7 +754,7 @@ namespace oi
                     timespec t_s, t_e;
                     std::string ipc_str;
                     serializer srz = SRZ_UNKNOWN;
-                    channel<T,R>* chnl  = NULL;
+                    channel<T,R>* chnl  = nullptr;
                     //uint64_t trace_no = get_trace_no();
                     //_tracer.update(trace_no, __LINE__);
                     clock_gettime(CLOCK_REALTIME, &t_s);
@@ -932,7 +932,7 @@ namespace oi
                 }
         public:
             communicator()throw();
-            void initialize(const std::string &me, const std::function<void(const oi::exception&)> & exception_handler = NULL)throw(oi::exception);
+            void initialize(const std::string &me, const std::function<void(const oi::exception&)> & exception_handler = nullptr)throw(oi::exception);
             void wait()throw(oi::exception);
             bool is_remote_ready(const std::string& module, const std::string& method)throw(oi::exception);
             std::map<std::string, cm_stat> get_channel_stat()throw(oi::exception);

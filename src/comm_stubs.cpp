@@ -5,14 +5,6 @@ oi::com_object::com_object():__msg(""),
     __exception_type(exception_type_val::NO_EXCEPT) {
 }
 
-//    void com_object::set_exception(const char * msg)throw()
-//    {
-//        if(msg != NULL)
-//        {
-//            __msg = std::string(msg);
-//        }
-//        __exception = true;
-//    }
 
 void oi::com_object::set_exception(const std::string& msg, int error_code, except_type type)throw() {
     __msg = msg;

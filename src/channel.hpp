@@ -67,7 +67,7 @@ namespace oi
 
             void process_thread_function()
             {
-                zmq::socket_t * sock = NULL;
+                zmq::socket_t * sock = nullptr;
                 try{
                     sock = new zmq::socket_t(*_context, ZMQ_REQ);
                     sock->setsockopt(ZMQ_LINGER, &CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE, sizeof(CHANNEL_SOCKET_LINGER_TIMEOUT_VALUE));
@@ -84,7 +84,7 @@ namespace oi
                     std::chrono::duration<double> srz_rsp;
                     while(_is_alive)
                     {
-                        zmq::message_t* req = NULL;
+                        zmq::message_t* req = nullptr;
 
                         bool wait_res = false;
                         while(_is_alive== true && wait_res == false)
@@ -95,7 +95,7 @@ namespace oi
                         if(!_is_alive)
                             break;
                         
-                        msg_container<T,R> *msg = NULL;
+                        msg_container<T,R> *msg = nullptr;
                         {
                             std::lock_guard<std::mutex> lk(_mutex);
                             msg = _que.front();
@@ -219,7 +219,7 @@ namespace oi
                                         true);
                             }
                         }
-                        if(req != NULL)
+                        if(req != nullptr)
                         {
                             delete req;
                         }
@@ -240,7 +240,7 @@ namespace oi
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
                 }
 
-                if(sock != NULL)
+                if(sock != nullptr)
                 {
                     try
                     {
@@ -262,7 +262,7 @@ namespace oi
             _is_alive = false;
             _ipc_path = ipc;
             _context = cntx;
-            _sem = NULL;
+            _sem = nullptr;
             _srz_tool = srz;
             _snd_timeout = snd_timeout;
             _rcv_timeout = rcv_timeout;
@@ -276,7 +276,7 @@ namespace oi
                     close();
                 }
                 //TODO joining ....
-                if(_sem != NULL)
+                if(_sem != nullptr)
                     delete _sem;
             }
             void init(int thread_count)throw (oi::exception)

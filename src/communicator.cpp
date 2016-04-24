@@ -63,20 +63,21 @@
     std::map<std::string, oi::cm_info> oi::communicator::get_service_stat()throw(oi::exception)
     {
         std::map<std::string, oi::cm_info> stat;
-        std::map<std::string, oi::transmission_stat*>::iterator it;
+//        std::map<std::string, oi::transmission_stat*>::iterator it;
 
         oi::service_sign sgn ;
 
         _service_stat_list_guard.lock();
         try
         {
-            for(it = _service_stat_list.begin(); it != _service_stat_list.end(); it++)
+            //for(it = _service_stat_list.begin(); it != _service_stat_list.end(); it++)
+            for(const auto & it : _service_stat_list)
             {
                 {
                     oi::shared_lock<oi::shared_mutex> lk{_service_info_guard};
-                    sgn = _service_info.get(it->first);
+                    sgn = _service_info.get(it.first);
                 }
-                stat[sgn.module + ":" + sgn.method] = it->second->get_stat();
+                stat[sgn.module + ":" + sgn.method] = it.second->get_stat();
             }
         }
         catch(std::exception& ex)
@@ -111,13 +112,14 @@
         {
             try
             {
-                std::map<std::string, oi::channel_base*>::iterator it;
-                for(it = _channel_map.begin();it != _channel_map.end(); it++)
+              //  std::map<std::string, oi::channel_base*>::iterator it;
+                //for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                for(const auto& it  : _channel_map)
                 {
-                    module = it->second->get_module();
-                    method = it->second->get_method();
+                    module = it.second->get_module();
+                    method = it.second->get_method();
 
-                    stat[module + ":" + method] = it->second->get_ch_stat();
+                    stat[module + ":" + method] = it.second->get_ch_stat();
                 }
             }
             catch(std::exception& ex)
@@ -144,10 +146,11 @@
         {
             try
             {
-                std::map<std::string, oi::channel_base*>::iterator it;
-                for(it = _channel_map.begin();it != _channel_map.end(); it++)
+               // std::map<std::string, oi::channel_base*>::iterator it;
+                //for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                for(const auto& it : _channel_map)
                 {
-                    stat[it->first] = it->second->get_stat();
+                    stat[it.first] = it.second->get_stat();
                 }
             }
             catch(std::exception& ex)
@@ -190,8 +193,7 @@
         try{
             srv = get_service_list(remote_module, false);
             std::set<std::string> lst= srv.get_methods();
-            std::set<std::string>::iterator it = lst.find(method_name);
-            if(it != lst.end())
+            if(lst.find(method_name) != lst.end())
             {
                 is_ready = true;
             }
@@ -276,11 +278,12 @@
                 oi::channel_base * c;
                 {
                     std::lock_guard<std::mutex> m{_channel_map_mutex};
-                    std::map<std::string, oi::channel_base*>::iterator it;
-                    for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                  //  std::map<std::string, oi::channel_base*>::iterator it;
+                    //for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                    for(const auto & it : _channel_map)
                     {
-                        c = it->second;
-                        if(c != NULL)
+                        c = it.second;
+                        if(c != nullptr)
                         {
                             c->close();
                             delete c;
