@@ -31,26 +31,22 @@
         bool sw = false;
         if(use_cache == true)
         {
-            _dst_setvice_list_gaurd.lock_shared();
+            oi::shared_lock<oi::shared_mutex> lk{_dst_setvice_list_guard};
+            std::map<std::string, oi::service_info>::iterator it = _dst_service_list.begin();
+            it = _dst_service_list.find(module);
+            if(it != _dst_service_list.end())
             {
-                std::map<std::string, oi::service_info>::iterator it = _dst_service_list.begin();
-                it = _dst_service_list.find(module);
-                if(it != _dst_service_list.end())
-                {
-                    srv = it->second;
-                    sw = true;
-                }
+                srv = it->second;
+                sw = true;
             }
-            _dst_setvice_list_gaurd.unlock_shared();
         }
         if(sw == false)
         {
             request<oi::dummy_msg, oi::service_info>(module, SERVICE_INFO_METHOD_NAME , d, srv, CHANNEL_SOCKET_SEND_TIMEOUT, CHANNEL_SOCKET_RECV_TIMEOUT, 1);
-            _dst_setvice_list_gaurd.lock();
             {
+                std::lock_guard<oi::shared_mutex> lk{_dst_setvice_list_guard};
                 _dst_service_list[module] = srv; 
             }
-            _dst_setvice_list_gaurd.unlock();
         }
         return srv;
     }
@@ -67,21 +63,21 @@
     std::map<std::string, oi::cm_info> oi::communicator::get_service_stat()throw(oi::exception)
     {
         std::map<std::string, oi::cm_info> stat;
-        std::map<std::string, oi::transmission_stat*>::iterator it;
+//        std::map<std::string, oi::transmission_stat*>::iterator it;
 
         oi::service_sign sgn ;
 
         _service_stat_list_guard.lock();
         try
         {
-            for(it = _service_stat_list.begin(); it != _service_stat_list.end(); it++)
+            //for(it = _service_stat_list.begin(); it != _service_stat_list.end(); it++)
+            for(const auto & it : _service_stat_list)
             {
-                _service_info_gaurd.lock_shared();
                 {
-                sgn = _service_info.get(it->first);
+                    oi::shared_lock<oi::shared_mutex> lk{_service_info_guard};
+                    sgn = _service_info.get(it.first);
                 }
-                _service_info_gaurd.unlock_shared();
-                stat[sgn.module + ":" + sgn.method] = it->second->get_stat();
+                stat[sgn.module + ":" + sgn.method] = it.second->get_stat();
             }
         }
         catch(std::exception& ex)
@@ -116,13 +112,14 @@
         {
             try
             {
-                std::map<std::string, oi::channel_base*>::iterator it;
-                for(it = _channel_map.begin();it != _channel_map.end(); it++)
+              //  std::map<std::string, oi::channel_base*>::iterator it;
+                //for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                for(const auto& it  : _channel_map)
                 {
-                    module = it->second->get_module();
-                    method = it->second->get_method();
+                    module = it.second->get_module();
+                    method = it.second->get_method();
 
-                    stat[module + ":" + method] = it->second->get_ch_stat();
+                    stat[module + ":" + method] = it.second->get_ch_stat();
                 }
             }
             catch(std::exception& ex)
@@ -149,10 +146,11 @@
         {
             try
             {
-                std::map<std::string, oi::channel_base*>::iterator it;
-                for(it = _channel_map.begin();it != _channel_map.end(); it++)
+               // std::map<std::string, oi::channel_base*>::iterator it;
+                //for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                for(const auto& it : _channel_map)
                 {
-                    stat[it->first] = it->second->get_stat();
+                    stat[it.first] = it.second->get_stat();
                 }
             }
             catch(std::exception& ex)
@@ -195,8 +193,7 @@
         try{
             srv = get_service_list(remote_module, false);
             std::set<std::string> lst= srv.get_methods();
-            std::set<std::string>::iterator it = lst.find(method_name);
-            if(it != lst.end())
+            if(lst.find(method_name) != lst.end())
             {
                 is_ready = true;
             }
@@ -225,7 +222,7 @@
     }
 
 
-    void oi::communicator::initialize(const std::string &me, const boost::function<void(const oi::exception&)> & exception_handler)throw(oi::exception)
+    void oi::communicator::initialize(const std::string &me, const std::function<void(const oi::exception&)> & exception_handler)throw(oi::exception)
     {
         if(_state != NEW)
         {
@@ -241,7 +238,7 @@
         _state = READY;
         try
         {
-            boost::function<oi::service_info(void)> f = boost::bind(&oi::communicator::get_service_info<oi::service_info>, this);
+            std::function<oi::service_info(void)> f = std::bind(&oi::communicator::get_service_info<oi::service_info>, this);
             register_callback<oi::service_info>(f, SERVICE_INFO_METHOD_NAME, 1, SRZ_MSGPACK);
         }
         catch(oi::exception& ex)
@@ -281,11 +278,12 @@
                 oi::channel_base * c;
                 {
                     std::lock_guard<std::mutex> m{_channel_map_mutex};
-                    std::map<std::string, oi::channel_base*>::iterator it;
-                    for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                  //  std::map<std::string, oi::channel_base*>::iterator it;
+                    //for(it = _channel_map.begin();it != _channel_map.end(); it++)
+                    for(const auto & it : _channel_map)
                     {
-                        c = it->second;
-                        if(c != NULL)
+                        c = it.second;
+                        if(c != nullptr)
                         {
                             c->close();
                             delete c;
@@ -296,15 +294,13 @@
 
             _context.close();
 
-            for(size_t i = 0; i< _worker_thread_list.size(); i++)
+            for(auto & th : _worker_thread_list)
             {
-                _worker_thread_list[i]->join();
-                delete _worker_thread_list[i];
+                th.join();
             }
-            for(size_t i = 0; i< _proxy_thread_list.size(); i++)
+            for(auto & th : _proxy_thread_list)
             {
-                _proxy_thread_list[i]->join();
-                delete _proxy_thread_list[i];
+                th.join();
             }
         }
         catch(...)
@@ -349,14 +345,14 @@
         return f;
     }
 
-    void oi::communicator::register_callback(boost::function<void(void)> f,
+    void oi::communicator::register_callback(std::function<void(void)> f,
             const std::string &mth,
             int parallel,
             oi::serializer srz
             )throw(oi::exception)//NOT THREAD SAFE
     {
         try{
-            if(f.empty())
+            if(!f)
             {
                 throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth);
             }

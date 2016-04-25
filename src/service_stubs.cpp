@@ -3,7 +3,7 @@
 
 oi::service_sign::service_sign()
 {
-    handler = NULL;
+    handler = nullptr;
     srz = SRZ_UNKNOWN;  // invalid
     type = MTH_UNKNOWN; // invalid
 }
@@ -91,10 +91,9 @@ bool oi::service_info::has_service(const std::string& str)throw(oi::exception)
     }
     try
     {
-        std::vector<oi::service_sign>::iterator it;
-        for(it = _service_list.begin(); it != _service_list.end(); it++)
+        for(const auto & it : _service_list)
         {
-            if( it->ipc_path == str)
+            if( it.ipc_path == str)
             {
                 return true;
             }
@@ -116,16 +115,13 @@ bool oi::service_info::has_service(const std::string& str)throw(oi::exception)
 
 oi::service_sign oi::service_info::get(const std::string& str)throw(oi::exception)
 {
-    bool flag = false;
-    std::vector<oi::service_sign>::iterator it;
     try
     {
-        for(it = _service_list.begin(); it != _service_list.end(); it++)
+        for(const auto& it : _service_list)
         {
-            if( it->ipc_path == str)
+            if( it.ipc_path == str)
             {
-                flag = true;
-                break;
+                return it;
             }
         }
     }
@@ -139,23 +135,16 @@ oi::service_sign oi::service_info::get(const std::string& str)throw(oi::exceptio
     {
         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "Unhandled unknown exception.");
     }
-
-    if(!flag)
-    {
-        throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "service '%' is NOT registered!");
-    }
-
-    return *it;
+    throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "service '%' is NOT registered!");
 }
 std::set<std::string> oi::service_info::get_methods()throw()
 {
-    std::vector<oi::service_sign>::iterator it;
     std::set<std::string> lst;
     try
     {
-        for(it = _service_list.begin(); it != _service_list.end(); it++)
+        for(const auto& it : _service_list)
         {
-            lst.insert(it->method);
+            lst.insert(it.method);
         }
     }
     catch(std::exception& ex)
@@ -242,11 +231,10 @@ std::string oi::service_info::to_string()throw(oi::exception)
 
 std::ostream& oi::operator<<(std::ostream& os, const oi::service_info& srv)
 {
-    std::vector<oi::service_sign>::const_iterator it;
     int i=0;
-    for(it = srv._service_list.begin(); it != srv._service_list.end(); it++)
+    for(const auto& it : srv._service_list)
     {
-        os << "[" << i << "]" << *it;
+        os << "[" << i << "]" << it;
         os << "\n";
         i++;
     }

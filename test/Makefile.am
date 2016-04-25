@@ -6,7 +6,6 @@ AM_CPPFLAGS = -I../src/ \
 	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
-    $(BOOST_THREAD_CFLAGS) \
     $(BOOST_SYSTEM_CFLAGS)
 
 
@@ -16,7 +15,6 @@ LDADD=../src/.libs/liboi_communicator.a \
 	$(OI_COMMON_LIBS) \
     $(ZMQ_LIBS) \
 	$(BOOST_SERIALIZATION_LIBS) \
-    $(BOOST_THREAD_LIBS) \
     $(BOOST_SYSTEM_LIBS) 
 check_PROGRAMS = client server 
 check_SCRIPTS = run_client_server.sh

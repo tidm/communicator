@@ -8,7 +8,6 @@ AM_CPPFLAGS = \
 	$(OI_COMMON_CFLAGS) \
     $(ZMQ_CFLAGS) \
     $(BOOST_SERIALIZATION_CFLAGS) \
-    $(BOOST_THREAD_CFLAGS) \
     $(BOOST_SYSTEM_CFLAGS)
 lib_LTLIBRARIES = liboi_communicator.la
 liboi_communicator_la_SOURCES = \
@@ -26,7 +25,6 @@ liboi_communicator_la_LIBADD = \
 	$(OI_COMMON_LIBS) \
     $(ZMQ_LIBS) \
 	$(BOOST_SERIALIZATION_LIBS) \
-    $(BOOST_THREAD_LIBS) \
     $(BOOST_SYSTEM_LIBS)
 
 oi_communicator_includedir = $(includedir)/oi/utils/communicator

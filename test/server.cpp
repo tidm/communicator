@@ -63,7 +63,7 @@ T get_data()
 //        ox.add_msg(__FILE__, __FUNCTION__, "6");
 //        throw ox;
 //    }
-    usleep(4000);
+   // usleep(4000);
     oi::container ct;
     ii++;
     ct.id = ii;
@@ -74,7 +74,7 @@ T get_data()
     return ct;
 }
 
-void shutdown(oi::communicator * cm)
+void shutdown1(oi::communicator * cm)
 {
     cm->shutdown();
 }
@@ -91,14 +91,14 @@ int main()
     cm.initialize("core", exp_handler);
     int count = 10000;
 
-    boost::function<oi::com_type<int>(void)> f_get_int;
-    f_get_int = boost::bind( &get_int<oi::com_type<int> > );
+    std::function<oi::com_type<int>(void)> f_get_int;
+    f_get_int = std::bind( &get_int<oi::com_type<int> > );
     cm.register_callback<oi::com_type<int> >(f_get_int, "get_int", 5, oi::SRZ_MSGPACK);
 
-    boost::function<oi::container(void)> f_get_data = boost::bind( &get_data<oi::container> );
+    std::function<oi::container(void)> f_get_data = std::bind( &get_data<oi::container> );
     cm.register_callback<oi::container >(f_get_data, "get_data", 5, oi::SRZ_BOOST);
 
-    boost::function<void(void)> f = boost::bind(&shutdown,&cm);
+    std::function<void(void)> f = std::bind(&shutdown1,&cm);
     cm.register_callback(f, "shutdown",1,oi::SRZ_MSGPACK);
 
     std::map<std::string, oi::cm_info> m;

@@ -4,7 +4,6 @@
 #include"com_type.hpp"
 #include"cm_stat.hpp"
 #include"service_stubs.hpp"
-#include <boost/thread.hpp>
 #include <chrono>
 #include<common.hpp>
 #include<typeinfo>
@@ -13,6 +12,7 @@
 #include<memory>
 
 #include<tracer.hpp>
+#include<shared_mutex.hpp>
 
 #define ZMQ_CONTEXT_IO_THREADS 10
 
@@ -58,7 +58,7 @@ namespace oi
                 {
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid method name `%'", _module_name);
                 }
-                if(comm == NULL)
+                if(comm == nullptr)
                 {
                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid communicator reference! NULL pointer exception! ");
                 }
@@ -76,7 +76,7 @@ namespace oi
             }
             method_interface()
             {
-                _comm = NULL;
+                _comm = nullptr;
                 _is_init = false;
                 _rcv_timeout = CHANNEL_SOCKET_RECV_TIMEOUT;
                 _snd_timeout = CHANNEL_SOCKET_SEND_TIMEOUT;
@@ -188,8 +188,8 @@ namespace oi
         private:
 //oi::tracer _tracer;
             
-            std::vector<boost::thread*> _worker_thread_list;
-            std::vector<boost::thread*> _proxy_thread_list;
+            std::vector<std::thread> _worker_thread_list;
+            std::vector<std::thread> _proxy_thread_list;
             zmq::context_t _context;
             std::vector<zmq::socket_t*>  _clients;
             std::vector<zmq::socket_t*>  _workers;
@@ -202,15 +202,15 @@ namespace oi
             volatile state _state;
 
             service_info _service_info;
-            boost::shared_mutex _service_info_gaurd;
+            oi::shared_mutex _service_info_guard;
 
             std::map<std::string, service_info> _dst_service_list;
-            boost::shared_mutex _dst_setvice_list_gaurd;
+            oi::shared_mutex _dst_setvice_list_guard;
 
             std::map<std::string, transmission_stat*> _service_stat_list;
             std::mutex _service_stat_list_guard;
 
-            boost::function<void(const oi::exception&)> _exception_handler;
+            std::function<void(const oi::exception&)> _exception_handler;
 
 
             template<typename T, typename R>
@@ -278,22 +278,22 @@ namespace oi
                 void generic_handler(T t, R & r, const std::string& ipc_path)
                 {
                     service_sign sgn ;
-                    boost::function<R(T)>  h_req;
-                    boost::function<R(void)>     h_get;
-                    boost::function<void(T)>      h_put;
-                    boost::function<void(void)>   h_sig;
+                    std::function<R(T)>  h_req;
+                    std::function<R(void)>     h_get;
+                    std::function<void(T)>      h_put;
+                    std::function<void(void)>   h_sig;
                     std::string exception_src("REMOTE");
                     try
                     {
-                        _service_info_gaurd.lock_shared();
-                        sgn = _service_info.get(ipc_path);
-                        _service_info_gaurd.unlock_shared();
-
+                        {
+                            oi::shared_lock<oi::shared_mutex> ml{_service_info_guard};
+                            sgn = _service_info.get(ipc_path);
+                        }
                         exception_src += "(" + sgn.module + ":" + sgn.method +")";
                         switch(sgn.type)
                         {
                             case MTH_REQ:
-                                h_req =  boost::any_cast< boost::function<R(T)> >(sgn.handler);
+                                h_req =  boost::any_cast< std::function<R(T)> >(sgn.handler);
                                 try
                                 {
                                     r = h_req(t);
@@ -314,7 +314,7 @@ namespace oi
                                 }
                                 break;
                             case MTH_GET:
-                                h_get =  boost::any_cast< boost::function<R(void)> >(sgn.handler);
+                                h_get =  boost::any_cast< std::function<R(void)> >(sgn.handler);
                                 try
                                 {
                                     r = h_get();
@@ -338,7 +338,7 @@ namespace oi
 
                                 break;
                             case MTH_PUT:
-                                h_put =  boost::any_cast< boost::function<void(T)> >(sgn.handler);
+                                h_put =  boost::any_cast< std::function<void(T)> >(sgn.handler);
                                 try
                                 {
                                     h_put(t);
@@ -360,7 +360,7 @@ namespace oi
 
                                 break;
                             case MTH_SIG:
-                                h_sig =  boost::any_cast< boost::function<void(void)> >(sgn.handler);
+                                h_sig =  boost::any_cast< std::function<void(void)> >(sgn.handler);
                                 try
                                 {
                                     h_sig();
@@ -491,11 +491,11 @@ namespace oi
 
                                 auto s2 = std::chrono::system_clock::now();
                                 //processing the request
-                                generic_handler<T,R>(t, boost::ref(r), ipc_addr);
+                                generic_handler<T,R>(t, std::ref(r), ipc_addr);
 
                                 auto s3 = std::chrono::system_clock::now();
                                 //serialization of the response
-                                zmq::message_t* rsp = NULL;
+                                zmq::message_t* rsp = nullptr;
                                 try
                                 {
                                     rsp = util.to_zmq_msg<R>(r);
@@ -514,7 +514,7 @@ namespace oi
                                 }
                                 catch(zmq::error_t & ex)
                                 {
-                                    if(rsp != NULL)
+                                    if(rsp != nullptr)
                                     {
                                         delete rsp;
                                     }
@@ -522,7 +522,7 @@ namespace oi
                                     ox.add_msg(__FILE__, __PRETTY_FUNCTION__, "Unable to send response data to client `%(%,%)` ", method_name, typeid(T).name(), typeid(R).name());
                                     throw ox;
                                 }
-                                if(rsp != NULL)
+                                if(rsp != nullptr)
                                 {
                                     delete rsp;
                                 }
@@ -540,7 +540,7 @@ namespace oi
                             {
                                 if(_state == READY )
                                 {
-                                    if(!_exception_handler.empty())
+                                    if(_exception_handler)
                                     {
                                         _exception_handler(ox);
                                     }
@@ -557,7 +557,7 @@ namespace oi
                     {
                         if(_state == READY )
                         {
-                            if(!_exception_handler.empty())
+                            if(_exception_handler)
                             {
                                 _exception_handler(ex);
                             }
@@ -577,8 +577,8 @@ namespace oi
                 {
                     std::string ipc_addr;
                     std::string inproc_addr;
-                    zmq::socket_t * client = NULL;
-                    zmq::socket_t * worker=  NULL;
+                    zmq::socket_t * client = nullptr;
+                    zmq::socket_t * worker=  nullptr;
                     try{
 
                         try
@@ -689,27 +689,12 @@ namespace oi
                                 std::lock_guard<std::mutex> m(_proxy_thread_mutex);
                                 _clients.push_back(client);
                                 _workers.push_back(worker);
-                            }
-
-                            //_is_run = true;
-                            boost::thread* th;
-                            for(int i=0; i< parallel_degree; i++)
-                            {
-                                th = new boost::thread(
-                                        boost::bind(
-                                            &communicator::worker_thread_function<T,R>,
-                                            this,
-                                            ipc_addr,
-                                            srz,
-                                            method_name
-                                            )
-                                        );
+                                for(int i=0; i< parallel_degree; i++)
                                 {
-                                    std::lock_guard<std::mutex> m(_proxy_thread_mutex);
-                                    _worker_thread_list.push_back(th);
+                                    _worker_thread_list.emplace_back( std::bind( &communicator::worker_thread_function<T,R>, this, ipc_addr, srz, method_name ) );
                                 }
                             }
-                            zmq::proxy(*client, *worker, NULL);
+                            zmq::proxy(*client, *worker, nullptr);
                         }
                         catch(zmq::error_t & ex)
                         {
@@ -744,12 +729,12 @@ namespace oi
 
                     try
                     {
-                        if(client != NULL)
+                        if(client != nullptr)
                         {
                             client->close();
                             delete client;
                         }
-                        if(worker !=  NULL)
+                        if(worker !=  nullptr)
                         {
                             worker->close();
                             delete worker;
@@ -759,9 +744,9 @@ namespace oi
                     {}
                 }
             service_info get_service_list(const std::string& module, bool use_cache = true);
-//uint64_t get_trace_no();
-//std::mutex _trace_no_lock;
-//uint64_t _trace_no;
+            //uint64_t get_trace_no();
+            //std::mutex _trace_no_lock;
+            //uint64_t _trace_no;
             template<typename T, typename R>
                 double request(const std::string &module, const std::string& method, T& t, R& r, int snd_timeout, int rcv_timeout, int thread_count )throw(oi::exception)
                 {
@@ -769,9 +754,9 @@ namespace oi
                     timespec t_s, t_e;
                     std::string ipc_str;
                     serializer srz = SRZ_UNKNOWN;
-                    channel<T,R>* chnl  = NULL;
-//uint64_t trace_no = get_trace_no();
-//_tracer.update(trace_no, __LINE__);
+                    channel<T,R>* chnl  = nullptr;
+                    //uint64_t trace_no = get_trace_no();
+                    //_tracer.update(trace_no, __LINE__);
                     clock_gettime(CLOCK_REALTIME, &t_s);
                     try
                     {
@@ -782,7 +767,7 @@ namespace oi
 
                         if(ipc_str_mspack != ipc_str_get_service_info)
                         {
-//_tracer.update(trace_no, __LINE__);
+                            //_tracer.update(trace_no, __LINE__);
                             service_info srv_inf = get_service_list(module);
                             if(srv_inf.has_service(ipc_str_mspack))
                             {
@@ -798,9 +783,9 @@ namespace oi
                                 }
                                 else
                                 {
-//_tracer.update(trace_no, __LINE__);
+                                    //_tracer.update(trace_no, __LINE__);
                                     throw oi::exception(__FILE__, __PRETTY_FUNCTION__,"requested service (%:%) is not registered on the server. avalable services are %",
-                                                                                      module, method, srv_inf.to_string());
+                                            module, method, srv_inf.to_string());
                                 }
                             }
                         }
@@ -916,28 +901,12 @@ namespace oi
                         }
 
 
-                        _service_info_gaurd.lock();
-                        _service_info.put( _name,
-                                method_name,
-                                mth_type,
-                                typeid(T).name(),
-                                typeid(R).name(),
-                                srz,
-                                ipc_path,
-                                f);
-                        _service_info_gaurd.unlock();
-
-                        boost::thread* th;
-                        th = new boost::thread(
-                                boost::bind(
-                                    &communicator::proxy_thread_function<T,R>,
-                                    this,
-                                    method_name,
-                                    srz,
-                                    parallel_degree
-                                    )
-                                );
-                        _proxy_thread_list.push_back(th);
+                        {
+                            std::lock_guard<oi::shared_mutex> lk{_service_info_guard};
+                            _service_info.put( _name, method_name, mth_type, typeid(T).name(), typeid(R).name(), srz, ipc_path, f);
+                        }
+                                
+                        _proxy_thread_list.emplace_back(std::bind( &communicator::proxy_thread_function<T,R>, this,method_name, srz, parallel_degree ));
                     }
                     catch(oi::exception& ex)
                     {
@@ -958,15 +927,12 @@ namespace oi
             template< typename T>
                 T get_service_info() /// should be check of throwing exception
                 {
-                    T srv_info;
-                    _service_info_gaurd.lock_shared();
-                    srv_info = _service_info;
-                    _service_info_gaurd.unlock_shared();
-                    return srv_info;
+                    oi::shared_lock<oi::shared_mutex> ml{_service_info_guard};
+                    return _service_info;
                 }
         public:
             communicator()throw();
-            void initialize(const std::string &me, const boost::function<void(const oi::exception&)> & exception_handler = NULL)throw(oi::exception);
+            void initialize(const std::string &me, const std::function<void(const oi::exception&)> & exception_handler = nullptr)throw(oi::exception);
             void wait()throw(oi::exception);
             bool is_remote_ready(const std::string& module, const std::string& method)throw(oi::exception);
             std::map<std::string, cm_stat> get_channel_stat()throw(oi::exception);
@@ -982,7 +948,7 @@ namespace oi
                     int thread_count = 1
                     )throw (oi::exception);
 
-            void register_callback(boost::function<void(void)> f,
+            void register_callback(std::function<void(void)> f,
                     const std::string &mth,
                     int parallel= 1,
                     serializer srz= SRZ_BOOST
@@ -1053,13 +1019,13 @@ namespace oi
                 }
 
             template<typename T>
-                void register_callback(boost::function<void(T)> f,
+                void register_callback(std::function<void(T)> f,
                         const std::string &mth,
                         int parallel= 1,
                         serializer srz= SRZ_BOOST
                         )throw(oi::exception)//NOT THREAD SAFE
                 {
-                    if(f.empty())
+                    if(!f)
                     {
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth );
                     }
@@ -1075,13 +1041,13 @@ namespace oi
                 }
 
             template<typename R>
-                void register_callback(boost::function<R(void)> f,
+                void register_callback(std::function<R(void)> f,
                         const std::string &mth,
                         int parallel= 1,
                         serializer srz= SRZ_BOOST
                         )throw(oi::exception)//NOT THREAD SAFE
                 {
-                    if(f.empty())
+                    if(!f)
                     {
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth);
                     }
@@ -1097,13 +1063,13 @@ namespace oi
 
 
             template<typename T, typename R>
-                void register_callback(boost::function<R(T)> f,
+                void register_callback(std::function<R(T)> f,
                         const std::string &mth,
                         int parallel = 1,
                         serializer srz= SRZ_BOOST
                         )throw(oi::exception)//NOT THREAD SAFE
                 {
-                    if(f.empty())
+                    if(!f)
                     {
                         throw oi::exception(__FILE__, __PRETTY_FUNCTION__, "invalid callback handler for method `%'", mth);
                     }

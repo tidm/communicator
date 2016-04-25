@@ -1,15 +1,15 @@
 #include"communicator.hpp"
 #include "container.hpp"
 #include <thread>
-void signal()
+void mysignal()
 {
     std::cerr << "signalled " << std::endl;
 }
-void shutdown(oi::communicator * cm)
-{
-    cm->shutdown();
-}
 oi::communicator cm;
+void shutdown1()
+{
+    cm.shutdown();
+}
 bool is_done;
 void get_stat()
 {
@@ -36,7 +36,7 @@ void call_core_get_data(int count)
         oi::container rsp;
         try{
             rsp = m_if_cont.call();
-//          std::cerr << "rsp: " << rsp << std::endl;
+          std::cerr << "rsp: " << rsp << std::endl;
         }
         catch(oi::exception & ex)
         {
@@ -80,11 +80,11 @@ int main(int argc, char* argv[])
     cm.initialize("notification");
 
 
-    boost::function<void(void)> f_sig = boost::bind( &signal);
+    std::function<void()> f_sig = mysignal;
     cm.register_callback(f_sig, "signal", 5, oi::SRZ_BOOST);
     
-    boost::function<void(void)> f = boost::bind(&shutdown, &cm);
-    cm.register_callback(f, "shutdown",1,oi::SRZ_MSGPACK);
+    std::function<void()> f1 = shutdown1;
+    cm.register_callback(f1, "shutdown",1,oi::SRZ_MSGPACK);
 
     oi::get_interface<oi::com_type<int> > m_if;
     m_if = cm.create_get_interface<oi::com_type<int> >("core", "get_int", 10, 10);
@@ -93,15 +93,15 @@ int main(int argc, char* argv[])
     m_if_kill = cm.create_sig_interface("core", "shutdown");
 
     std::thread th(get_stat);
-    std::vector<std::thread*> thread_list;
+    std::vector<std::thread> thread_list;
     for(int i=0; i< thread_count; i++)
     {
-        thread_list.push_back(new std::thread(call_core_get_data, count));
+        thread_list.emplace_back(call_core_get_data, count);
     }
 
     for(int i=0; i< thread_count; i++)
     {
-        thread_list[i]->join();
+        thread_list[i].join();
     }
     is_done = true;
     th.join();
