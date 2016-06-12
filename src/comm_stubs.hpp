@@ -9,44 +9,46 @@
 #include<boost/any.hpp>
 #include"zmq_msg_util.hpp"
 
-#define OI_MSGPACK_DEFINE(...) MSGPACK_DEFINE(__exception, __msg, __VA_ARGS__)
-namespace oi
-{
-    class communicator;
-    class com_object
-    {
-        friend class communicator;
-        protected:
-        bool __exception;
-        std::string __msg;
-        public:
-        MSGPACK_DEFINE(__exception, __msg)
-        template<class T>
-            void serialize(T & ar, const unsigned int version)
-        {
-            ar & __exception;
-            ar & __msg;
-        }
-        com_object();
-        void set_exception(const char * msg)throw();
-        void set_exception(const std::string& msg)throw();
-        bool exception_flag() throw();
-        std::string exception_msg()throw();
-        virtual ~com_object();
-    };
+#define OI_MSGPACK_DEFINE(...) MSGPACK_DEFINE(__msg, __error_code, __exception_type, __VA_ARGS__)
+namespace oi {
+typedef uint8_t except_type;
+class communicator;
+class com_object {
 
-    class dummy_msg: public com_object
-    {
-        friend class boost::serialization::access;
-        public:
-        dummy_msg();
-        private:
-        template<class T>
-            void serialize(T & ar, const unsigned int version)
-            {
-                ar & boost::serialization::base_object<com_object>(*this);
-            }
-    };
+    friend class communicator;
+  protected:
+    std::string __msg;
+    int __error_code;
+    except_type __exception_type;
+  public:
+    MSGPACK_DEFINE(__msg, __error_code, __exception_type)
+    template<class T>
+    void serialize(T& ar, const unsigned int version) {
+        ar& __msg;
+        ar& __error_code;
+        ar& __exception_type;
+    }
+    com_object();
+    //        void set_exception(const char * msg, int error_code, exception_type type )throw();
+    void set_exception(const std::string& msg, int error_code, except_type type)throw();
+    bool exception_flag() throw();
+    std::string exception_msg()throw();
+    except_type exception_type()throw();
+    int error_code()throw();
+
+    virtual ~com_object();
+};
+
+class dummy_msg: public com_object {
+    friend class boost::serialization::access;
+  public:
+    dummy_msg();
+  private:
+    template<class T>
+    void serialize(T& ar, const unsigned int version) {
+        ar& boost::serialization::base_object<com_object>(*this);
+    }
+};
 }
 
 #endif

@@ -7,6 +7,6 @@ Name: @PACKAGE_NAME@
 Description: Communicator system of modular structure
 Version: @PACKAGE_VERSION@
 URL: @PACKAGE_URL@
-Requires: libzmq >= 4.0 oi_exception >= 7.0
-Libs: -L${libdir} -loi_communicator -lboost_system -lboost_thread -lboost_serialization -lmsgpack 
+Requires: libzmq >= 4.0 oi_exception >= 7.0 oi_common >= 7.0
+Libs: -L${libdir} -loi_communicator -lboost_system -lboost_serialization -lmsgpack -lpthread
 Cflags: -I${includedir}/oi/utils/communicator -I${libdir}/oi/utils/communicator/include/

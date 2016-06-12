@@ -5,7 +5,8 @@ LT_LANG([C++])
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
-AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
+
+AM_INIT_AUTOMAKE([foreign subdir-objects -Werror])
 AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
@@ -22,9 +23,9 @@ AC_PROG_RANLIB
 BOOST_REQUIRE([1.49])
 BOOST_SERIALIZATION([mt])
 BOOST_SYSTEM([mt])
-BOOST_THREAD([mt])
 PKG_CHECK_MODULES([ZMQ], [libzmq >= 4.0])
 PKG_CHECK_MODULES([OI_EXCEPTION], [oi_exception >= 7.0])
+PKG_CHECK_MODULES([OI_COMMON], [oi_common >= 7.0])
 
 AC_CHECK_HEADER_STDBOOL
 AC_C_INLINE
@@ -42,5 +43,7 @@ AC_CONFIG_FILES([Makefile
 
 AC_SUBST([OI_COMMUNICATOR_SO_VERSION], [7:0:0])
 AC_SUBST([OI_COMMUNICATOR_API_VERSION], [7.0.0])
+
+AC_DEFINE_UNQUOTED(IPC_FILE_PATH, "${prefix}/var/run/", [directory in with ipc socket files will be created])
 
 AC_OUTPUT

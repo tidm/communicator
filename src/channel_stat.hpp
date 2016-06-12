@@ -1,8 +1,6 @@
 #ifndef CHANNEL_STAT_HPP
 #define CHANNEL_STAT_HPP
-#include<iostream>
-#include<iomanip>
-#include<boost/thread/mutex.hpp>
+#include<mutex>
 #include<exception.hpp>
 namespace oi
 {
@@ -28,7 +26,7 @@ namespace oi
             long double _sum_time_srz;
             long double _sum_time2_srz;
             bool is_active;
-            boost::mutex _lock; 
+            std::mutex _lock; 
         public:
             channel_stat();
             void update(uint64_t t_total, uint64_t t_srz, bool success) throw(oi::exception);//micro second

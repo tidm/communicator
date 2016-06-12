@@ -9,9 +9,6 @@
 /* Define to 1 if you have <boost/system/error_code.hpp> */
 #undef HAVE_BOOST_SYSTEM_ERROR_CODE_HPP
 
-/* Define to 1 if you have <boost/thread.hpp> */
-#undef HAVE_BOOST_THREAD_HPP
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -53,6 +50,9 @@
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
+
+/* directory in with ipc socket files will be created */
+#undef IPC_FILE_PATH
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

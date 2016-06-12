@@ -636,6 +636,8 @@ LTLIBOBJS
 LIBOBJS
 OI_COMMUNICATOR_API_VERSION
 OI_COMMUNICATOR_SO_VERSION
+OI_COMMON_LIBS
+OI_COMMON_CFLAGS
 OI_EXCEPTION_LIBS
 OI_EXCEPTION_CFLAGS
 ZMQ_LIBS
@@ -643,9 +645,6 @@ ZMQ_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
-BOOST_THREAD_LIBS
-BOOST_THREAD_LDPATH
-BOOST_THREAD_LDFLAGS
 BOOST_SYSTEM_LIBS
 BOOST_SYSTEM_LDPATH
 BOOST_SYSTEM_LDFLAGS
@@ -811,7 +810,9 @@ PKG_CONFIG_LIBDIR
 ZMQ_CFLAGS
 ZMQ_LIBS
 OI_EXCEPTION_CFLAGS
-OI_EXCEPTION_LIBS'
+OI_EXCEPTION_LIBS
+OI_COMMON_CFLAGS
+OI_COMMON_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1435,10 +1436,12 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --disable-dependency-tracking  speeds up one-time build
-  --enable-dependency-tracking   do not reject slow dependency extractors
-  --enable-silent-rules          less verbose build output (undo: `make V=1')
-  --disable-silent-rules         verbose build output (undo: `make V=0')
+  --enable-dependency-tracking
+                          do not reject slow dependency extractors
+  --disable-dependency-tracking
+                          speeds up one-time build
+  --enable-silent-rules   less verbose build output (undo: "make V=1")
+  --disable-silent-rules  verbose build output (undo: "make V=0")
   --enable-static-boost   Prefer the static boost libraries over the shared
                           ones [no]
 
@@ -1476,6 +1479,10 @@ Some influential environment variables:
               C compiler flags for OI_EXCEPTION, overriding pkg-config
   OI_EXCEPTION_LIBS
               linker flags for OI_EXCEPTION, overriding pkg-config
+  OI_COMMON_CFLAGS
+              C compiler flags for OI_COMMON, overriding pkg-config
+  OI_COMMON_LIBS
+              linker flags for OI_COMMON, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2826,6 +2833,9 @@ esac
 
 
 
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -3615,6 +3625,65 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC understands -c and -o together" >&5
+$as_echo_n "checking whether $CC understands -c and -o together... " >&6; }
+if ${am_cv_prog_cc_c_o+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+  # Make sure it works both with $CC and with simple cc.
+  # Following AC_PROG_CC_C_O, we do the test twice because some
+  # compilers refuse to overwrite an existing .o file with -o,
+  # though they will create one.
+  am_cv_prog_cc_c_o=yes
+  for am_i in 1 2; do
+    if { echo "$as_me:$LINENO: $CC -c conftest.$ac_ext -o conftest2.$ac_objext" >&5
+   ($CC -c conftest.$ac_ext -o conftest2.$ac_objext) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); } \
+         && test -f conftest2.$ac_objext; then
+      : OK
+    else
+      am_cv_prog_cc_c_o=no
+      break
+    fi
+  done
+  rm -f core conftest*
+  unset am_i
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_prog_cc_c_o" >&5
+$as_echo "$am_cv_prog_cc_c_o" >&6; }
+if test "$am_cv_prog_cc_c_o" != yes; then
+   # Losing compiler, so override with the script.
+   # FIXME: It is wrong to rewrite CC.
+   # But if we don't then we get into trouble of one sort or another.
+   # A longer-term fix would be to have automake use am__CC in this case,
+   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
+   CC="$am_aux_dir/compile $CC"
+fi
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for a sed that does not truncate output" >&5
 $as_echo_n "checking for a sed that does not truncate output... " >&6; }
 if ${ac_cv_path_SED+:} false; then :
@@ -4335,7 +4404,8 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len" && \
+	test undefined != "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -5898,7 +5968,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -5914,9 +5984,19 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    LD="${LD-ld} -m elf_i386"
+	    case `/usr/bin/file conftest.o` in
+	      *x86-64*)
+		LD="${LD-ld} -m elf32_x86_64"
+		;;
+	      *)
+		LD="${LD-ld} -m elf_i386"
+		;;
+	    esac
 	    ;;
-	  ppc64-*linux*|powerpc64-*linux*)
+	  powerpc64le-*)
+	    LD="${LD-ld} -m elf32lppclinux"
+	    ;;
+	  powerpc64-*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -5935,7 +6015,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  ppc*-*linux*|powerpc*-*linux*)
+	  powerpcle-*)
+	    LD="${LD-ld} -m elf64lppc"
+	    ;;
+	  powerpc-*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -14720,7 +14803,8 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
   fi
 
 
-am__api_version='1.11'
+
+am__api_version='1.14'
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
@@ -14817,9 +14901,6 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether build environment is sane" >&5
 $as_echo_n "checking whether build environment is sane... " >&6; }
-# Just in case
-sleep 1
-echo timestamp > conftest.file
 # Reject unsafe characters in $srcdir or the absolute working directory
 # name.  Accept space and tab only in the latter.
 am_lf='
@@ -14830,32 +14911,40 @@ case `pwd` in
 esac
 case $srcdir in
   *[\\\"\#\$\&\'\`$am_lf\ \	]*)
-    as_fn_error $? "unsafe srcdir value: \`$srcdir'" "$LINENO" 5;;
+    as_fn_error $? "unsafe srcdir value: '$srcdir'" "$LINENO" 5;;
 esac
 
-# Do `set' in a subshell so we don't clobber the current shell's
+# Do 'set' in a subshell so we don't clobber the current shell's
 # arguments.  Must try -L first in case configure is actually a
 # symlink; some systems play weird games with the mod time of symlinks
 # (eg FreeBSD returns the mod time of the symlink's containing
 # directory).
 if (
-   set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
-   if test "$*" = "X"; then
-      # -L didn't work.
-      set X `ls -t "$srcdir/configure" conftest.file`
-   fi
-   rm -f conftest.file
-   if test "$*" != "X $srcdir/configure conftest.file" \
-      && test "$*" != "X conftest.file $srcdir/configure"; then
+   am_has_slept=no
+   for am_try in 1 2; do
+     echo "timestamp, slept: $am_has_slept" > conftest.file
+     set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
+     if test "$*" = "X"; then
+	# -L didn't work.
+	set X `ls -t "$srcdir/configure" conftest.file`
+     fi
+     if test "$*" != "X $srcdir/configure conftest.file" \
+	&& test "$*" != "X conftest.file $srcdir/configure"; then
 
-      # If neither matched, then we have a broken ls.  This can happen
-      # if, for instance, CONFIG_SHELL is bash and it inherits a
-      # broken ls alias from the environment.  This has actually
-      # happened.  Such a system could not be considered "sane".
-      as_fn_error $? "ls -t appears to fail.  Make sure there is not a broken
-alias in your environment" "$LINENO" 5
-   fi
-
+	# If neither matched, then we have a broken ls.  This can happen
+	# if, for instance, CONFIG_SHELL is bash and it inherits a
+	# broken ls alias from the environment.  This has actually
+	# happened.  Such a system could not be considered "sane".
+	as_fn_error $? "ls -t appears to fail.  Make sure there is not a broken
+  alias in your environment" "$LINENO" 5
+     fi
+     if test "$2" = conftest.file || test $am_try -eq 2; then
+       break
+     fi
+     # Just in case.
+     sleep 1
+     am_has_slept=yes
+   done
    test "$2" = conftest.file
    )
 then
@@ -14867,6 +14956,16 @@ Check your system clock" "$LINENO" 5
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+# If we didn't sleep, we still need to ensure time stamps of config.status and
+# generated files are strictly newer.
+am_sleep_pid=
+if grep 'slept: no' conftest.file >/dev/null 2>&1; then
+  ( sleep 1 ) &
+  am_sleep_pid=$!
+fi
+
+rm -f conftest.file
+
 test "$program_prefix" != NONE &&
   program_transform_name="s&^&$program_prefix&;$program_transform_name"
 # Use a double $ so make ignores it.
@@ -14877,9 +14976,6 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
-
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
   *\ * | *\	*)
@@ -14889,12 +14985,12 @@ if test x"${MISSING+set}" != xset; then
   esac
 fi
 # Use eval to expand $SHELL
-if eval "$MISSING --run true"; then
-  am_missing_run="$MISSING --run "
+if eval "$MISSING --is-lightweight"; then
+  am_missing_run="$MISSING "
 else
   am_missing_run=
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \`missing' script is too old or missing" >&5
-$as_echo "$as_me: WARNING: \`missing' script is too old or missing" >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: 'missing' script is too old or missing" >&5
+$as_echo "$as_me: WARNING: 'missing' script is too old or missing" >&2;}
 fi
 
 if test x"${install_sh}" != xset; then
@@ -14906,10 +15002,10 @@ if test x"${install_sh}" != xset; then
   esac
 fi
 
-# Installed binaries are usually stripped using `strip' when the user
-# run `make install-strip'.  However `strip' might not be the right
+# Installed binaries are usually stripped using 'strip' when the user
+# run "make install-strip".  However 'strip' might not be the right
 # tool to use in cross-compilation environments, therefore Automake
-# will honor the `STRIP' environment variable to overrule this program.
+# will honor the 'STRIP' environment variable to overrule this program.
 if test "$cross_compiling" != no; then
   if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}strip", so it can be a program name with args.
@@ -15048,12 +15144,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MKDIR_P" >&5
 $as_echo "$MKDIR_P" >&6; }
 
-mkdir_p="$MKDIR_P"
-case $mkdir_p in
-  [\\/$]* | ?:[\\/]*) ;;
-  */*) mkdir_p="\$(top_builddir)/$mkdir_p" ;;
-esac
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 $as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
 set x ${MAKE-make}
@@ -15113,7 +15203,7 @@ am__quote=
 _am_result=none
 # First try GNU make style include.
 echo "include confinc" > confmf
-# Ignore all kinds of additional output from `make'.
+# Ignore all kinds of additional output from 'make'.
 case `$am_make -s -f confmf 2> /dev/null` in #(
 *the\ am__doit\ target*)
   am__include=include
@@ -15156,6 +15246,45 @@ else
   AMDEP_FALSE=
 fi
 
+
+# Check whether --enable-silent-rules was given.
+if test "${enable_silent_rules+set}" = set; then :
+  enableval=$enable_silent_rules;
+fi
+
+case $enable_silent_rules in # (((
+  yes) AM_DEFAULT_VERBOSITY=0;;
+   no) AM_DEFAULT_VERBOSITY=1;;
+    *) AM_DEFAULT_VERBOSITY=1;;
+esac
+am_make=${MAKE-make}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
+$as_echo_n "checking whether $am_make supports nested variables... " >&6; }
+if ${am_cv_make_support_nested_variables+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if $as_echo 'TRUE=$(BAR$(V))
+BAR0=false
+BAR1=true
+V=1
+am__doit:
+	@$(TRUE)
+.PHONY: am__doit' | $am_make -f - >/dev/null 2>&1; then
+  am_cv_make_support_nested_variables=yes
+else
+  am_cv_make_support_nested_variables=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_make_support_nested_variables" >&5
+$as_echo "$am_cv_make_support_nested_variables" >&6; }
+if test $am_cv_make_support_nested_variables = yes; then
+    AM_V='$(V)'
+  AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
+else
+  AM_V=$AM_DEFAULT_VERBOSITY
+  AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
+fi
+AM_BACKSLASH='\'
 
 if test "`cd $srcdir && pwd`" != "`pwd`"; then
   # Use -I$(srcdir) only when $(srcdir) != ., so that make's output
@@ -15207,13 +15336,24 @@ AUTOHEADER=${AUTOHEADER-"${am_missing_run}autoheader"}
 
 MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
+# For better backward compatibility.  To be removed once Automake 1.9.x
+# dies out for good.  For more background, see:
+# <http://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
+# <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
+mkdir_p='$(MKDIR_P)'
+
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
 # Always define AMTAR for backward compatibility.  Yes, it's still used
 # in the wild :-(  We should find a proper way to deprecate it ...
 AMTAR='$${TAR-tar}'
 
+
+# We'll loop over all known methods to create a tar archive until one works.
+_am_tools='gnutar  pax cpio none'
+
 am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
+
 
 
 
@@ -15229,8 +15369,8 @@ else
   # We make a subdir and do the tests there.  Otherwise we can end up
   # making bogus files that we don't know about and never remove.  For
   # instance it was reported that on HP-UX the gcc test will end up
-  # making a dummy file named `D' -- because `-MD' means `put the output
-  # in D'.
+  # making a dummy file named 'D' -- because '-MD' means "put the output
+  # in D".
   rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
@@ -15265,16 +15405,16 @@ else
     : > sub/conftest.c
     for i in 1 2 3 4 5 6; do
       echo '#include "conftst'$i'.h"' >> sub/conftest.c
-      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
-      # Solaris 8's {/usr,}/bin/sh.
-      touch sub/conftst$i.h
+      # Using ": > sub/conftst$i.h" creates only sub/conftst1.h with
+      # Solaris 10 /bin/sh.
+      echo '/* dummy */' > sub/conftst$i.h
     done
     echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
-    # We check with `-c' and `-o' for the sake of the "dashmstdout"
+    # We check with '-c' and '-o' for the sake of the "dashmstdout"
     # mode.  It turns out that the SunPro C++ compiler does not properly
-    # handle `-M -o', and we need to detect this.  Also, some Intel
-    # versions had trouble with output in subdirs
+    # handle '-M -o', and we need to detect this.  Also, some Intel
+    # versions had trouble with output in subdirs.
     am__obj=sub/conftest.${OBJEXT-o}
     am__minus_obj="-o $am__obj"
     case $depmode in
@@ -15283,8 +15423,8 @@ else
       test "$am__universal" = false || continue
       ;;
     nosideeffect)
-      # after this tag, mechanisms are not by side-effect, so they'll
-      # only be used when explicitly requested
+      # After this tag, mechanisms are not by side-effect, so they'll
+      # only be used when explicitly requested.
       if test "x$enable_dependency_tracking" = xyes; then
 	continue
       else
@@ -15292,7 +15432,7 @@ else
       fi
       ;;
     msvc7 | msvc7msys | msvisualcpp | msvcmsys)
-      # This compiler won't grok `-c -o', but also, the minuso test has
+      # This compiler won't grok '-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
       am__obj=conftest.${OBJEXT-o}
@@ -15357,8 +15497,8 @@ else
   # We make a subdir and do the tests there.  Otherwise we can end up
   # making bogus files that we don't know about and never remove.  For
   # instance it was reported that on HP-UX the gcc test will end up
-  # making a dummy file named `D' -- because `-MD' means `put the output
-  # in D'.
+  # making a dummy file named 'D' -- because '-MD' means "put the output
+  # in D".
   rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
@@ -15393,16 +15533,16 @@ else
     : > sub/conftest.c
     for i in 1 2 3 4 5 6; do
       echo '#include "conftst'$i'.h"' >> sub/conftest.c
-      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
-      # Solaris 8's {/usr,}/bin/sh.
-      touch sub/conftst$i.h
+      # Using ": > sub/conftst$i.h" creates only sub/conftst1.h with
+      # Solaris 10 /bin/sh.
+      echo '/* dummy */' > sub/conftst$i.h
     done
     echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
-    # We check with `-c' and `-o' for the sake of the "dashmstdout"
+    # We check with '-c' and '-o' for the sake of the "dashmstdout"
     # mode.  It turns out that the SunPro C++ compiler does not properly
-    # handle `-M -o', and we need to detect this.  Also, some Intel
-    # versions had trouble with output in subdirs
+    # handle '-M -o', and we need to detect this.  Also, some Intel
+    # versions had trouble with output in subdirs.
     am__obj=sub/conftest.${OBJEXT-o}
     am__minus_obj="-o $am__obj"
     case $depmode in
@@ -15411,8 +15551,8 @@ else
       test "$am__universal" = false || continue
       ;;
     nosideeffect)
-      # after this tag, mechanisms are not by side-effect, so they'll
-      # only be used when explicitly requested
+      # After this tag, mechanisms are not by side-effect, so they'll
+      # only be used when explicitly requested.
       if test "x$enable_dependency_tracking" = xyes; then
 	continue
       else
@@ -15420,7 +15560,7 @@ else
       fi
       ;;
     msvc7 | msvc7msys | msvisualcpp | msvcmsys)
-      # This compiler won't grok `-c -o', but also, the minuso test has
+      # This compiler won't grok '-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
       am__obj=conftest.${OBJEXT-o}
@@ -15475,15 +15615,57 @@ fi
 
 
 
+# POSIX will say in a future version that running "rm -f" with no argument
+# is OK; and we want to be able to make that assumption in our Makefile
+# recipes.  So use an aggressive probe to check that the usage we want is
+# actually supported "in the wild" to an acceptable degree.
+# See automake bug#10828.
+# To make any issue more visible, cause the running configure to be aborted
+# by default if the 'rm' program in use doesn't match our expectations; the
+# user can still override this though.
+if rm -f && rm -fr && rm -rf; then : OK; else
+  cat >&2 <<'END'
+Oops!
+
+Your 'rm' program seems unable to run without file operands specified
+on the command line, even when the '-f' option is present.  This is contrary
+to the behaviour of most rm programs out there, and not conforming with
+the upcoming POSIX standard: <http://austingroupbugs.net/view.php?id=542>
+
+Please tell bug-automake@gnu.org about your system, including the value
+of your $PATH and any error possibly output before this message.  This
+can help us improve future automake versions.
+
+END
+  if test x"$ACCEPT_INFERIOR_RM_PROGRAM" = x"yes"; then
+    echo 'Configuration will proceed anyway, since you have set the' >&2
+    echo 'ACCEPT_INFERIOR_RM_PROGRAM variable to "yes"' >&2
+    echo >&2
+  else
+    cat >&2 <<'END'
+Aborting the configuration process, to ensure you take notice of the issue.
+
+You can download and install GNU coreutils to get an 'rm' implementation
+that behaves properly: <http://www.gnu.org/software/coreutils/>.
+
+If you want to complete the configuration process using your problematic
+'rm' anyway, export the environment variable ACCEPT_INFERIOR_RM_PROGRAM
+to "yes", and re-run configure.
+
+END
+    as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
+  fi
+fi
+
 # Check whether --enable-silent-rules was given.
 if test "${enable_silent_rules+set}" = set; then :
   enableval=$enable_silent_rules;
 fi
 
-case $enable_silent_rules in
-yes) AM_DEFAULT_VERBOSITY=0;;
-no)  AM_DEFAULT_VERBOSITY=1;;
-*)   AM_DEFAULT_VERBOSITY=0;;
+case $enable_silent_rules in # (((
+  yes) AM_DEFAULT_VERBOSITY=0;;
+   no) AM_DEFAULT_VERBOSITY=1;;
+    *) AM_DEFAULT_VERBOSITY=0;;
 esac
 am_make=${MAKE-make}
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
@@ -16355,6 +16537,65 @@ ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC understands -c and -o together" >&5
+$as_echo_n "checking whether $CC understands -c and -o together... " >&6; }
+if ${am_cv_prog_cc_c_o+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+  # Make sure it works both with $CC and with simple cc.
+  # Following AC_PROG_CC_C_O, we do the test twice because some
+  # compilers refuse to overwrite an existing .o file with -o,
+  # though they will create one.
+  am_cv_prog_cc_c_o=yes
+  for am_i in 1 2; do
+    if { echo "$as_me:$LINENO: $CC -c conftest.$ac_ext -o conftest2.$ac_objext" >&5
+   ($CC -c conftest.$ac_ext -o conftest2.$ac_objext) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); } \
+         && test -f conftest2.$ac_objext; then
+      : OK
+    else
+      am_cv_prog_cc_c_o=no
+      break
+    fi
+  done
+  rm -f core conftest*
+  unset am_i
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_prog_cc_c_o" >&5
+$as_echo "$am_cv_prog_cc_c_o" >&6; }
+if test "$am_cv_prog_cc_c_o" != yes; then
+   # Losing compiler, so override with the script.
+   # FIXME: It is wrong to rewrite CC.
+   # But if we don't then we get into trouble of one sort or another.
+   # A longer-term fix would be to have automake use am__CC in this case,
+   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
+   CC="$am_aux_dir/compile $CC"
+fi
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -17577,682 +17818,6 @@ fi
 
 
 
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the flags needed to use pthreads" >&5
-$as_echo_n "checking for the flags needed to use pthreads... " >&6; }
-if ${boost_cv_pthread_flag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-   boost_cv_pthread_flag=
-  # The ordering *is* (sometimes) important.  Some notes on the
-  # individual items follow:
-  # (none): in case threads are in libc; should be tried before -Kthread and
-  #       other compiler flags to prevent continual compiler warnings
-  # -lpthreads: AIX (must check this before -lpthread)
-  # -Kthread: Sequent (threads in libc, but -Kthread needed for pthread.h)
-  # -kthread: FreeBSD kernel threads (preferred to -pthread since SMP-able)
-  # -llthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
-  # -pthread: GNU Linux/GCC (kernel threads), BSD/GCC (userland threads)
-  # -pthreads: Solaris/GCC
-  # -mthreads: MinGW32/GCC, Lynx/GCC
-  # -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
-  #      doesn't hurt to check since this sometimes defines pthreads too;
-  #      also defines -D_REENTRANT)
-  #      ... -mt is also the pthreads flag for HP/aCC
-  # -lpthread: GNU Linux, etc.
-  # --thread-safe: KAI C++
-  case $host_os in #(
-    *solaris*)
-      # On Solaris (at least, for some versions), libc contains stubbed
-      # (non-functional) versions of the pthreads routines, so link-based
-      # tests will erroneously succeed.  (We need to link with -pthreads/-mt/
-      # -lpthread.)  (The stubs are missing pthread_cleanup_push, or rather
-      # a function called by this macro, so we could check for that, but
-      # who knows whether they'll stub that too in a future libc.)  So,
-      # we'll just look for -pthreads and -lpthread first:
-      boost_pthread_flags="-pthreads -lpthread -mt -pthread";; #(
-    *)
-      boost_pthread_flags="-lpthreads -Kthread -kthread -llthread -pthread \
-                           -pthreads -mthreads -lpthread --thread-safe -mt";;
-  esac
-  # Generate the test file.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <pthread.h>
-int
-main ()
-{
-pthread_t th; pthread_join(th, 0);
-    pthread_attr_init(0); pthread_cleanup_push(0, 0);
-    pthread_create(0,0,0,0); pthread_cleanup_pop(0);
-  ;
-  return 0;
-}
-_ACEOF
-  for boost_pthread_flag in '' $boost_pthread_flags; do
-    boost_pthread_ok=false
-    boost_pthreads__save_LIBS=$LIBS
-    LIBS="$LIBS $boost_pthread_flag"
-    if ac_fn_cxx_try_link "$LINENO"; then :
-  if grep ".*$boost_pthread_flag" conftest.err; then
-         echo "This flag seems to have triggered warnings" >&5
-       else
-         boost_pthread_ok=:; boost_cv_pthread_flag=$boost_pthread_flag
-       fi
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-    LIBS=$boost_pthreads__save_LIBS
-    $boost_pthread_ok && break
-  done
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $boost_cv_pthread_flag" >&5
-$as_echo "$boost_cv_pthread_flag" >&6; }
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-boost_thread_save_LIBS=$LIBS
-boost_thread_save_LDFLAGS=$LDFLAGS
-boost_thread_save_CPPFLAGS=$CPPFLAGS
-# Link-time dependency from thread to system was added as of 1.49.0.
-if test $boost_major_version -ge 149; then
-if test x"$boost_cv_inc_path" = xno; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Boost not available, not searching for the Boost system library" >&5
-$as_echo "$as_me: Boost not available, not searching for the Boost system library" >&6;}
-else
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-if test x"$boost_cv_inc_path" = xno; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Boost not available, not searching for boost/system/error_code.hpp" >&5
-$as_echo "$as_me: Boost not available, not searching for boost/system/error_code.hpp" >&6;}
-else
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-boost_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-ac_fn_cxx_check_header_mongrel "$LINENO" "boost/system/error_code.hpp" "ac_cv_header_boost_system_error_code_hpp" "$ac_includes_default"
-if test "x$ac_cv_header_boost_system_error_code_hpp" = xyes; then :
-
-$as_echo "#define HAVE_BOOST_SYSTEM_ERROR_CODE_HPP 1" >>confdefs.h
-
-else
-  as_fn_error $? "cannot find boost/system/error_code.hpp" "$LINENO" 5
-fi
-
-
-CPPFLAGS=$boost_save_CPPFLAGS
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-fi
-
-boost_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the Boost system library" >&5
-$as_echo_n "checking for the Boost system library... " >&6; }
-if ${boost_cv_lib_system+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  boost_cv_lib_system=no
-  case "mt" in #(
-    (mt | mt-) boost_mt=-mt; boost_rtopt=;; #(
-    (mt* | mt-*) boost_mt=-mt; boost_rtopt=`expr "Xmt" : 'Xmt-*\(.*\)'`;; #(
-    (*) boost_mt=; boost_rtopt=mt;;
-  esac
-  if test $enable_static_boost = yes; then
-    boost_rtopt="s$boost_rtopt"
-  fi
-  # Find the proper debug variant depending on what we've been asked to find.
-  case $boost_rtopt in #(
-    (*d*) boost_rt_d=$boost_rtopt;; #(
-    (*[sgpn]*) # Insert the `d' at the right place (in between `sg' and `pn')
-      boost_rt_d=`echo "$boost_rtopt" | sed 's/\(s*g*\)\(p*n*\)/\1\2/'`;; #(
-    (*) boost_rt_d='-d';;
-  esac
-  # If the PREFERRED-RT-OPT are not empty, prepend a `-'.
-  test -n "$boost_rtopt" && boost_rtopt="-$boost_rtopt"
-  $boost_guess_use_mt && boost_mt=-mt
-  # Look for the abs path the static archive.
-  # $libext is computed by Libtool but let's make sure it's non empty.
-  test -z "$libext" &&
-    as_fn_error $? "the libext variable is empty, did you invoke Libtool?" "$LINENO" 5
-  boost_save_ac_objext=$ac_objext
-  # Generate the test file.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <boost/system/error_code.hpp>
-
-int
-main ()
-{
-boost::system::error_code e; e.clear();
-  ;
-  return 0;
-}
-_ACEOF
-  if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_objext=do_not_rm_me_plz
-else
-  as_fn_error $? "cannot compile a test that uses Boost system" "$LINENO" 5
-fi
-rm -f core conftest.err conftest.$ac_objext
-  ac_objext=$boost_save_ac_objext
-  boost_failed_libs=
-# Don't bother to ident the following nested for loops, only the 2
-# innermost ones matter.
-for boost_lib_ in system; do
-for boost_tag_ in -$boost_cv_lib_tag ''; do
-for boost_ver_ in -$boost_cv_lib_version ''; do
-for boost_mt_ in $boost_mt -mt ''; do
-for boost_rtopt_ in $boost_rtopt '' -d; do
-  for boost_lib in \
-    boost_$boost_lib_$boost_tag_$boost_mt_$boost_rtopt_$boost_ver_ \
-    boost_$boost_lib_$boost_tag_$boost_rtopt_$boost_ver_ \
-    boost_$boost_lib_$boost_tag_$boost_mt_$boost_ver_ \
-    boost_$boost_lib_$boost_tag_$boost_ver_
-  do
-    # Avoid testing twice the same lib
-    case $boost_failed_libs in #(
-      (*@$boost_lib@*) continue;;
-    esac
-    # If with_boost is empty, we'll search in /lib first, which is not quite
-    # right so instead we'll try to a location based on where the headers are.
-    boost_tmp_lib=$with_boost
-    test x"$with_boost" = x && boost_tmp_lib=${boost_cv_inc_path%/include}
-    for boost_ldpath in "$boost_tmp_lib/lib" '' \
-             /opt/local/lib* /usr/local/lib* /opt/lib* /usr/lib* \
-             "$with_boost" C:/Boost/lib /lib*
-    do
-      # Don't waste time with directories that don't exist.
-      if test x"$boost_ldpath" != x && test ! -e "$boost_ldpath"; then
-        continue
-      fi
-      boost_save_LDFLAGS=$LDFLAGS
-      # Are we looking for a static library?
-      case $boost_ldpath:$boost_rtopt_ in #(
-        (*?*:*s*) # Yes (Non empty boost_ldpath + s in rt opt)
-          boost_cv_lib_system_LIBS="$boost_ldpath/lib$boost_lib.$libext"
-          test -e "$boost_cv_lib_system_LIBS" || continue;; #(
-        (*) # No: use -lboost_foo to find the shared library.
-          boost_cv_lib_system_LIBS="-l$boost_lib";;
-      esac
-      boost_save_LIBS=$LIBS
-      LIBS="$boost_cv_lib_system_LIBS $LIBS"
-      test x"$boost_ldpath" != x && LDFLAGS="$LDFLAGS -L$boost_ldpath"
-      rm -f conftest$ac_exeext
-boost_save_ac_ext=$ac_ext
-boost_use_source=:
-# If we already have a .o, re-use it.  We change $ac_ext so that $ac_link
-# tries to link the existing object file instead of compiling from source.
-test -f conftest.$ac_objext && ac_ext=$ac_objext && boost_use_source=false &&
-  $as_echo "$as_me:${as_lineno-$LINENO}: re-using the existing conftest.$ac_objext" >&5
-if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-         test -z "$ac_cxx_werror_flag" ||
-         test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-         test "$cross_compiling" = yes ||
-         $as_executable_p conftest$ac_exeext
-       }; then :
-  boost_cv_lib_system=yes
-else
-  if $boost_use_source; then
-         $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-       fi
-       boost_cv_lib_system=no
-fi
-ac_objext=$boost_save_ac_objext
-ac_ext=$boost_save_ac_ext
-rm -f core conftest.err conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-      ac_objext=$boost_save_ac_objext
-      LDFLAGS=$boost_save_LDFLAGS
-      LIBS=$boost_save_LIBS
-      if test x"$boost_cv_lib_system" = xyes; then
-        # Check or used cached result of whether or not using -R or
-        # -rpath makes sense.  Some implementations of ld, such as for
-        # Mac OSX, require -rpath but -R is the flag known to work on
-        # other systems.  https://github.com/tsuna/boost.m4/issues/19
-        if ${boost_cv_rpath_link_ldflag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $boost_ldpath in
-           '') # Nothing to do.
-             boost_cv_rpath_link_ldflag=
-             boost_rpath_link_ldflag_found=yes;;
-           *)
-            for boost_cv_rpath_link_ldflag in -Wl,-R, -Wl,-rpath,; do
-              LDFLAGS="$boost_save_LDFLAGS -L$boost_ldpath $boost_cv_rpath_link_ldflag$boost_ldpath"
-              LIBS="$boost_save_LIBS $boost_cv_lib_system_LIBS"
-              rm -f conftest$ac_exeext
-boost_save_ac_ext=$ac_ext
-boost_use_source=:
-# If we already have a .o, re-use it.  We change $ac_ext so that $ac_link
-# tries to link the existing object file instead of compiling from source.
-test -f conftest.$ac_objext && ac_ext=$ac_objext && boost_use_source=false &&
-  $as_echo "$as_me:${as_lineno-$LINENO}: re-using the existing conftest.$ac_objext" >&5
-if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-         test -z "$ac_cxx_werror_flag" ||
-         test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-         test "$cross_compiling" = yes ||
-         $as_executable_p conftest$ac_exeext
-       }; then :
-  boost_rpath_link_ldflag_found=yes
-                break
-else
-  if $boost_use_source; then
-         $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-       fi
-       boost_rpath_link_ldflag_found=no
-fi
-ac_objext=$boost_save_ac_objext
-ac_ext=$boost_save_ac_ext
-rm -f core conftest.err conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-            done
-            ;;
-          esac
-          if test "x$boost_rpath_link_ldflag_found" != "xyes"; then :
-  as_fn_error $? "Unable to determine whether to use -R or -rpath" "$LINENO" 5
-fi
-          LDFLAGS=$boost_save_LDFLAGS
-          LIBS=$boost_save_LIBS
-
-fi
-
-        test x"$boost_ldpath" != x &&
-          boost_cv_lib_system_LDFLAGS="-L$boost_ldpath $boost_cv_rpath_link_ldflag$boost_ldpath"
-        boost_cv_lib_system_LDPATH="$boost_ldpath"
-        break 7
-      else
-        boost_failed_libs="$boost_failed_libs@$boost_lib@"
-      fi
-    done
-  done
-done
-done
-done
-done
-done # boost_lib_
-rm -f conftest.$ac_objext
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $boost_cv_lib_system" >&5
-$as_echo "$boost_cv_lib_system" >&6; }
-case $boost_cv_lib_system in #(
-  (no) $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-    as_fn_error $? "cannot find the flags to link with Boost system" "$LINENO" 5
-    ;;
-esac
-BOOST_SYSTEM_LDFLAGS=$boost_cv_lib_system_LDFLAGS
-BOOST_SYSTEM_LDPATH=$boost_cv_lib_system_LDPATH
-BOOST_LDPATH=$boost_cv_lib_system_LDPATH
-BOOST_SYSTEM_LIBS=$boost_cv_lib_system_LIBS
-CPPFLAGS=$boost_save_CPPFLAGS
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-fi
-
-
-
-fi # end of the Boost.System check.
-LIBS="$LIBS $BOOST_SYSTEM_LIBS $boost_cv_pthread_flag"
-LDFLAGS="$LDFLAGS $BOOST_SYSTEM_LDFLAGS"
-CPPFLAGS="$CPPFLAGS $boost_cv_pthread_flag"
-
-# When compiling for the Windows platform, the threads library is named
-# differently.
-case $host_os in
-  (*mingw*) boost_thread_lib_ext=_win32;;
-esac
-if test x"$boost_cv_inc_path" = xno; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Boost not available, not searching for the Boost thread library" >&5
-$as_echo "$as_me: Boost not available, not searching for the Boost thread library" >&6;}
-else
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-if test x"$boost_cv_inc_path" = xno; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Boost not available, not searching for boost/thread.hpp" >&5
-$as_echo "$as_me: Boost not available, not searching for boost/thread.hpp" >&6;}
-else
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-boost_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-ac_fn_cxx_check_header_mongrel "$LINENO" "boost/thread.hpp" "ac_cv_header_boost_thread_hpp" "$ac_includes_default"
-if test "x$ac_cv_header_boost_thread_hpp" = xyes; then :
-
-$as_echo "#define HAVE_BOOST_THREAD_HPP 1" >>confdefs.h
-
-else
-  as_fn_error $? "cannot find boost/thread.hpp" "$LINENO" 5
-fi
-
-
-CPPFLAGS=$boost_save_CPPFLAGS
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-fi
-
-boost_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the Boost thread library" >&5
-$as_echo_n "checking for the Boost thread library... " >&6; }
-if ${boost_cv_lib_thread+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  boost_cv_lib_thread=no
-  case "mt" in #(
-    (mt | mt-) boost_mt=-mt; boost_rtopt=;; #(
-    (mt* | mt-*) boost_mt=-mt; boost_rtopt=`expr "Xmt" : 'Xmt-*\(.*\)'`;; #(
-    (*) boost_mt=; boost_rtopt=mt;;
-  esac
-  if test $enable_static_boost = yes; then
-    boost_rtopt="s$boost_rtopt"
-  fi
-  # Find the proper debug variant depending on what we've been asked to find.
-  case $boost_rtopt in #(
-    (*d*) boost_rt_d=$boost_rtopt;; #(
-    (*[sgpn]*) # Insert the `d' at the right place (in between `sg' and `pn')
-      boost_rt_d=`echo "$boost_rtopt" | sed 's/\(s*g*\)\(p*n*\)/\1\2/'`;; #(
-    (*) boost_rt_d='-d';;
-  esac
-  # If the PREFERRED-RT-OPT are not empty, prepend a `-'.
-  test -n "$boost_rtopt" && boost_rtopt="-$boost_rtopt"
-  $boost_guess_use_mt && boost_mt=-mt
-  # Look for the abs path the static archive.
-  # $libext is computed by Libtool but let's make sure it's non empty.
-  test -z "$libext" &&
-    as_fn_error $? "the libext variable is empty, did you invoke Libtool?" "$LINENO" 5
-  boost_save_ac_objext=$ac_objext
-  # Generate the test file.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <boost/thread.hpp>
-
-int
-main ()
-{
-boost::thread t; boost::mutex m;
-  ;
-  return 0;
-}
-_ACEOF
-  if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_objext=do_not_rm_me_plz
-else
-  as_fn_error $? "cannot compile a test that uses Boost thread" "$LINENO" 5
-fi
-rm -f core conftest.err conftest.$ac_objext
-  ac_objext=$boost_save_ac_objext
-  boost_failed_libs=
-# Don't bother to ident the following nested for loops, only the 2
-# innermost ones matter.
-for boost_lib_ in thread$boost_thread_lib_ext; do
-for boost_tag_ in -$boost_cv_lib_tag ''; do
-for boost_ver_ in -$boost_cv_lib_version ''; do
-for boost_mt_ in $boost_mt -mt ''; do
-for boost_rtopt_ in $boost_rtopt '' -d; do
-  for boost_lib in \
-    boost_$boost_lib_$boost_tag_$boost_mt_$boost_rtopt_$boost_ver_ \
-    boost_$boost_lib_$boost_tag_$boost_rtopt_$boost_ver_ \
-    boost_$boost_lib_$boost_tag_$boost_mt_$boost_ver_ \
-    boost_$boost_lib_$boost_tag_$boost_ver_
-  do
-    # Avoid testing twice the same lib
-    case $boost_failed_libs in #(
-      (*@$boost_lib@*) continue;;
-    esac
-    # If with_boost is empty, we'll search in /lib first, which is not quite
-    # right so instead we'll try to a location based on where the headers are.
-    boost_tmp_lib=$with_boost
-    test x"$with_boost" = x && boost_tmp_lib=${boost_cv_inc_path%/include}
-    for boost_ldpath in "$boost_tmp_lib/lib" '' \
-             /opt/local/lib* /usr/local/lib* /opt/lib* /usr/lib* \
-             "$with_boost" C:/Boost/lib /lib*
-    do
-      # Don't waste time with directories that don't exist.
-      if test x"$boost_ldpath" != x && test ! -e "$boost_ldpath"; then
-        continue
-      fi
-      boost_save_LDFLAGS=$LDFLAGS
-      # Are we looking for a static library?
-      case $boost_ldpath:$boost_rtopt_ in #(
-        (*?*:*s*) # Yes (Non empty boost_ldpath + s in rt opt)
-          boost_cv_lib_thread_LIBS="$boost_ldpath/lib$boost_lib.$libext"
-          test -e "$boost_cv_lib_thread_LIBS" || continue;; #(
-        (*) # No: use -lboost_foo to find the shared library.
-          boost_cv_lib_thread_LIBS="-l$boost_lib";;
-      esac
-      boost_save_LIBS=$LIBS
-      LIBS="$boost_cv_lib_thread_LIBS $LIBS"
-      test x"$boost_ldpath" != x && LDFLAGS="$LDFLAGS -L$boost_ldpath"
-      rm -f conftest$ac_exeext
-boost_save_ac_ext=$ac_ext
-boost_use_source=:
-# If we already have a .o, re-use it.  We change $ac_ext so that $ac_link
-# tries to link the existing object file instead of compiling from source.
-test -f conftest.$ac_objext && ac_ext=$ac_objext && boost_use_source=false &&
-  $as_echo "$as_me:${as_lineno-$LINENO}: re-using the existing conftest.$ac_objext" >&5
-if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-         test -z "$ac_cxx_werror_flag" ||
-         test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-         test "$cross_compiling" = yes ||
-         $as_executable_p conftest$ac_exeext
-       }; then :
-  boost_cv_lib_thread=yes
-else
-  if $boost_use_source; then
-         $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-       fi
-       boost_cv_lib_thread=no
-fi
-ac_objext=$boost_save_ac_objext
-ac_ext=$boost_save_ac_ext
-rm -f core conftest.err conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-      ac_objext=$boost_save_ac_objext
-      LDFLAGS=$boost_save_LDFLAGS
-      LIBS=$boost_save_LIBS
-      if test x"$boost_cv_lib_thread" = xyes; then
-        # Check or used cached result of whether or not using -R or
-        # -rpath makes sense.  Some implementations of ld, such as for
-        # Mac OSX, require -rpath but -R is the flag known to work on
-        # other systems.  https://github.com/tsuna/boost.m4/issues/19
-        if ${boost_cv_rpath_link_ldflag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $boost_ldpath in
-           '') # Nothing to do.
-             boost_cv_rpath_link_ldflag=
-             boost_rpath_link_ldflag_found=yes;;
-           *)
-            for boost_cv_rpath_link_ldflag in -Wl,-R, -Wl,-rpath,; do
-              LDFLAGS="$boost_save_LDFLAGS -L$boost_ldpath $boost_cv_rpath_link_ldflag$boost_ldpath"
-              LIBS="$boost_save_LIBS $boost_cv_lib_thread_LIBS"
-              rm -f conftest$ac_exeext
-boost_save_ac_ext=$ac_ext
-boost_use_source=:
-# If we already have a .o, re-use it.  We change $ac_ext so that $ac_link
-# tries to link the existing object file instead of compiling from source.
-test -f conftest.$ac_objext && ac_ext=$ac_objext && boost_use_source=false &&
-  $as_echo "$as_me:${as_lineno-$LINENO}: re-using the existing conftest.$ac_objext" >&5
-if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-         test -z "$ac_cxx_werror_flag" ||
-         test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-         test "$cross_compiling" = yes ||
-         $as_executable_p conftest$ac_exeext
-       }; then :
-  boost_rpath_link_ldflag_found=yes
-                break
-else
-  if $boost_use_source; then
-         $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-       fi
-       boost_rpath_link_ldflag_found=no
-fi
-ac_objext=$boost_save_ac_objext
-ac_ext=$boost_save_ac_ext
-rm -f core conftest.err conftest_ipa8_conftest.oo \
-      conftest$ac_exeext
-            done
-            ;;
-          esac
-          if test "x$boost_rpath_link_ldflag_found" != "xyes"; then :
-  as_fn_error $? "Unable to determine whether to use -R or -rpath" "$LINENO" 5
-fi
-          LDFLAGS=$boost_save_LDFLAGS
-          LIBS=$boost_save_LIBS
-
-fi
-
-        test x"$boost_ldpath" != x &&
-          boost_cv_lib_thread_LDFLAGS="-L$boost_ldpath $boost_cv_rpath_link_ldflag$boost_ldpath"
-        boost_cv_lib_thread_LDPATH="$boost_ldpath"
-        break 7
-      else
-        boost_failed_libs="$boost_failed_libs@$boost_lib@"
-      fi
-    done
-  done
-done
-done
-done
-done
-done # boost_lib_
-rm -f conftest.$ac_objext
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $boost_cv_lib_thread" >&5
-$as_echo "$boost_cv_lib_thread" >&6; }
-case $boost_cv_lib_thread in #(
-  (no) $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-    as_fn_error $? "cannot find the flags to link with Boost thread" "$LINENO" 5
-    ;;
-esac
-BOOST_THREAD_LDFLAGS=$boost_cv_lib_thread_LDFLAGS
-BOOST_THREAD_LDPATH=$boost_cv_lib_thread_LDPATH
-BOOST_LDPATH=$boost_cv_lib_thread_LDPATH
-BOOST_THREAD_LIBS=$boost_cv_lib_thread_LIBS
-CPPFLAGS=$boost_save_CPPFLAGS
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-fi
-
-
-BOOST_THREAD_LIBS="$BOOST_THREAD_LIBS $BOOST_SYSTEM_LIBS $boost_cv_pthread_flag"
-BOOST_THREAD_LDFLAGS="$BOOST_SYSTEM_LDFLAGS"
-BOOST_CPPFLAGS="$BOOST_CPPFLAGS $boost_cv_pthread_flag"
-LIBS=$boost_thread_save_LIBS
-LDFLAGS=$boost_thread_save_LDFLAGS
-CPPFLAGS=$boost_thread_save_CPPFLAGS
-
-
 
 
 
@@ -18556,6 +18121,97 @@ $as_echo "yes" >&6; }
 
 fi
 
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OI_COMMON" >&5
+$as_echo_n "checking for OI_COMMON... " >&6; }
+
+if test -n "$OI_COMMON_CFLAGS"; then
+    pkg_cv_OI_COMMON_CFLAGS="$OI_COMMON_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"oi_common >= 7.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "oi_common >= 7.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OI_COMMON_CFLAGS=`$PKG_CONFIG --cflags "oi_common >= 7.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$OI_COMMON_LIBS"; then
+    pkg_cv_OI_COMMON_LIBS="$OI_COMMON_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"oi_common >= 7.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "oi_common >= 7.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OI_COMMON_LIBS=`$PKG_CONFIG --libs "oi_common >= 7.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        OI_COMMON_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "oi_common >= 7.0" 2>&1`
+        else
+	        OI_COMMON_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "oi_common >= 7.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$OI_COMMON_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (oi_common >= 7.0) were not met:
+
+$OI_COMMON_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables OI_COMMON_CFLAGS
+and OI_COMMON_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables OI_COMMON_CFLAGS
+and OI_COMMON_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	OI_COMMON_CFLAGS=$pkg_cv_OI_COMMON_CFLAGS
+	OI_COMMON_LIBS=$pkg_cv_OI_COMMON_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for stdbool.h that conforms to C99" >&5
 $as_echo_n "checking for stdbool.h that conforms to C99... " >&6; }
 if ${ac_cv_header_stdbool_h+:} false; then :
@@ -18755,6 +18411,12 @@ OI_COMMUNICATOR_SO_VERSION=7:0:0
 OI_COMMUNICATOR_API_VERSION=7.0.0
 
 
+
+cat >>confdefs.h <<_ACEOF
+#define IPC_FILE_PATH "${prefix}/var/run/"
+_ACEOF
+
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -18864,6 +18526,14 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking that generated files are newer than configure" >&5
+$as_echo_n "checking that generated files are newer than configure... " >&6; }
+   if test -n "$am_sleep_pid"; then
+     # Hide warnings about reused PIDs.
+     wait $am_sleep_pid 2>/dev/null
+   fi
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
+$as_echo "done" >&6; }
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then
   as_fn_error $? "conditional \"AMDEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -21251,7 +20921,7 @@ _LT_EOF
 
  ;;
     "depfiles":C) test x"$AMDEP_TRUE" != x"" || {
-  # Autoconf 2.62 quotes --file arguments for eval, but not when files
+  # Older Autoconf quotes --file arguments for eval, but not when files
   # are listed without --file.  Let's play safe and only enable the eval
   # if we detect the quoting.
   case $CONFIG_FILES in
@@ -21264,7 +20934,7 @@ _LT_EOF
     # Strip MF so we end up with the name of the file.
     mf=`echo "$mf" | sed -e 's/:.*$//'`
     # Check whether this is an Automake generated Makefile or not.
-    # We used to match only the files named `Makefile.in', but
+    # We used to match only the files named 'Makefile.in', but
     # some people rename them; so instead we look at the file content.
     # Grep'ing the first line is not enough: some people post-process
     # each Makefile.in and add a new line on top of each file to say so.
@@ -21298,21 +20968,19 @@ $as_echo X"$mf" |
       continue
     fi
     # Extract the definition of DEPDIR, am__include, and am__quote
-    # from the Makefile without running `make'.
+    # from the Makefile without running 'make'.
     DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
     test -z "$DEPDIR" && continue
     am__include=`sed -n 's/^am__include = //p' < "$mf"`
-    test -z "am__include" && continue
+    test -z "$am__include" && continue
     am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
-    # When using ansi2knr, U may be empty or an underscore; expand it
-    U=`sed -n 's/^U = //p' < "$mf"`
     # Find all dependency output files, they are included files with
     # $(DEPDIR) in their names.  We invoke sed twice because it is the
     # simplest approach to changing $(DEPDIR) to its actual value in the
     # expansion.
     for file in `sed -n "
       s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
-	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
+	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g'`; do
       # Make sure the directory exists.
       test -f "$dirpart/$file" && continue
       fdir=`$as_dirname -- "$file" ||
